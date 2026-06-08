@@ -20,7 +20,7 @@ function FormField({
   children?: React.ReactNode;
 }) {
   const inputClasses =
-    'w-full bg-transparent border-b border-white/20 py-4 focus:outline-none focus:border-primary transition-all placeholder:text-on-surface-variant/40';
+    'w-full bg-transparent border-b border-black/10 py-4 focus:outline-none focus:border-primary transition-all placeholder:text-on-surface-variant/40';
 
   return (
     <div className="relative group">
@@ -82,7 +82,7 @@ export function Contact() {
               <textarea
                 placeholder="Your Message"
                 rows={4}
-                className="w-full bg-transparent border-b border-white/20 py-4 focus:outline-none focus:border-primary transition-all placeholder:text-on-surface-variant/40 resize-none"
+                className="w-full bg-transparent border-b border-black/10 py-4 focus:outline-none focus:border-primary transition-all placeholder:text-on-surface-variant/40 resize-none"
               />
               <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-primary group-focus-within:w-full transition-all duration-500" />
             </div>

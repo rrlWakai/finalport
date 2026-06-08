@@ -44,7 +44,7 @@ export function Hero() {
           >
             <img
               src={heroBg}
-              alt=""
+              alt="Rhen Lumbo — Full-Stack Web Developer in the Philippines"
               className="w-full h-full object-cover"
             />
           </motion.div>
@@ -53,27 +53,27 @@ export function Hero() {
         {/* Text — bottom on mobile, left on desktop */}
         <div className="lg:order-1 flex items-center px-5 lg:pl-margin-desktop lg:pr-16 py-16 lg:py-0">
           <div className="w-full max-w-lg">
-            {/* Badge */}
+            {/* Role badge */}
             <motion.div
               {...fadeIn(0)}
-              className="inline-flex items-center gap-2.5 px-4 py-2 border border-primary/20 rounded-full mb-10 bg-primary/[0.04]"
+              className="inline-flex items-center gap-2.5 px-4 py-2 border border-primary/20 rounded-full mb-8 bg-primary/[0.04]"
             >
               <span className="w-2 h-2 rounded-full bg-primary" />
               <span className="font-label-caps text-label-caps text-primary uppercase">
-                Available for Projects
+                Full-Stack Web Developer — Philippines
               </span>
             </motion.div>
 
             {/* Headline */}
-            <h1 ref={titleRef} className="mb-8">
+            <h1 ref={titleRef} className="mb-6">
               <div className="overflow-hidden mb-1">
-                <span className="hero-line inline-block font-headline-lg text-headline-lg sm:text-5xl lg:text-headline-lg text-white leading-[1.15] tracking-tight">
-                  Websites that turn
+                <span className="hero-line inline-block font-headline-lg text-headline-lg sm:text-5xl lg:text-headline-lg text-on-surface leading-[1.15] tracking-tight">
+                  Booking systems, resort
                 </span>
               </div>
               <div className="overflow-hidden">
                 <span className="hero-line inline-block font-headline-lg text-headline-lg sm:text-5xl lg:text-headline-lg text-primary leading-[1.15] tracking-tight">
-                  visitors into customers.
+                  websites, built with React.
                 </span>
               </div>
             </h1>
@@ -83,8 +83,9 @@ export function Hero() {
               {...fadeIn(0.7)}
               className="font-body-lg text-body-lg text-on-surface-variant mb-10 leading-relaxed"
             >
-              High-performance booking systems, resort websites, and web
-              applications for brands that mean business.
+              I build custom booking systems, resort websites, and web applications
+              for businesses in the Philippines and worldwide. React. TypeScript.
+              Supabase. Results-driven development that helps you grow online.
             </motion.p>
 
             {/* Calls to action */}

@@ -26,9 +26,15 @@ export interface Philosophy {
 export interface ServiceItem {
   id: string;
   title: string;
+  tagline: string;
   description: string;
+  details: string[];
   icon: string;
-  highlighted?: boolean;
+}
+
+export interface FaqItem {
+  question: string;
+  answer: string;
 }
 
 export interface NavLink {

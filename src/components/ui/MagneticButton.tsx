@@ -31,7 +31,7 @@ export function MagneticButton({ children, variant = 'ghost', className = '', ty
     primary:
       'bg-primary text-on-primary px-10 py-4 rounded-lg font-label-caps text-label-caps uppercase hover:shadow-[0_0_20px_rgba(255,193,116,0.3)]',
     ghost:
-      'border border-white/10 px-10 py-4 rounded-lg font-label-caps text-label-caps uppercase hover:bg-white/5',
+      'border border-black/10 px-10 py-4 rounded-lg font-label-caps text-label-caps uppercase hover:bg-black/5',
   };
 
   return (

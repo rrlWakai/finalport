@@ -24,10 +24,10 @@ function TechCard({ name, icon, delay }: { name: string; icon: string; delay: nu
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay: delay * 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="bg-white/[0.03] backdrop-blur-xl border border-white/10 p-8 rounded-2xl w-48 h-48 flex flex-col items-center justify-center gap-4 group hover:border-primary/50 transition-all duration-500 cursor-default"
+      className="bg-black/[0.03] backdrop-blur-xl border border-black/10 p-8 rounded-2xl w-48 h-48 flex flex-col items-center justify-center gap-4 group hover:border-primary/50 transition-all duration-500 cursor-default"
       style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
     >
-      <div className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-lg group-hover:bg-primary/20 transition-colors">
+      <div className="w-12 h-12 flex items-center justify-center bg-black/5 rounded-lg group-hover:bg-primary/20 transition-colors">
         <Icon className="w-6 h-6 text-on-surface-variant group-hover:text-primary transition-colors" />
       </div>
       <span className="font-label-caps text-label-caps uppercase tracking-widest">

@@ -9,7 +9,7 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 w-full bg-background/80 backdrop-blur-xl border-b border-white/10 z-50">
+    <header className="fixed top-0 w-full bg-background/80 backdrop-blur-xl border-b border-black/10 z-50">
       <nav className="flex justify-between items-center w-full px-5 lg:px-margin-desktop py-6 max-w-container-max mx-auto">
         <a href="#" className="font-display-xl text-body-lg font-bold tracking-tighter text-on-surface">
           RHEN LUMBO
@@ -45,7 +45,7 @@ export function Navbar() {
       </nav>
 
       {mobileOpen && (
-        <div className="md:hidden bg-surface-container border-t border-white/10 px-5 py-6 space-y-4">
+        <div className="md:hidden bg-surface-container border-t border-black/10 px-5 py-6 space-y-4">
           {navLinks.map((link) => (
             <a
               key={link.href}

@@ -45,7 +45,7 @@ function ProjectCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-100px' }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      className="sticky top-[15vh] bg-surface-container border border-white/5 rounded-2xl lg:rounded-3xl overflow-hidden grid grid-cols-12 min-h-[50vh] lg:h-[70vh] shadow-2xl"
+      className="sticky top-[15vh] bg-surface-container border border-black/5 rounded-2xl lg:rounded-3xl overflow-hidden grid grid-cols-12 min-h-[50vh] lg:h-[70vh] shadow-2xl"
     >
       <div className="col-span-12 lg:col-span-5 p-6 lg:p-12 flex flex-col justify-between">
         <div>
@@ -71,7 +71,7 @@ function ProjectCard({
       <div className="hidden lg:block col-span-7 bg-surface-container-highest overflow-hidden">
         {project.isTextVisual && project.textVisual ? (
           <div className="w-full h-full flex items-center justify-center p-20">
-            <span className="text-[200px] font-bold text-white/5 select-none rotate-12">
+            <span className="text-[200px] font-bold text-black/5 select-none rotate-12">
               {project.textVisual}
             </span>
           </div>

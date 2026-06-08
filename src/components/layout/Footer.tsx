@@ -2,11 +2,14 @@ import { socialLinks } from '../../data';
 
 export function Footer() {
   return (
-    <footer className="w-full py-section-gap border-t border-white/5 bg-surface-container-lowest">
+    <footer className="w-full py-section-gap border-t border-black/5 bg-surface-container-lowest">
       <div className="flex flex-col items-center justify-center space-y-8 px-5 lg:px-margin-desktop">
         <div className="font-display-xl text-headline-lg text-on-surface">
           RHEN LUMBO
         </div>
+        <p className="font-body-md text-on-surface-variant">
+          Full-Stack Web Developer — Philippines
+        </p>
         <div className="flex gap-12">
           {socialLinks.map((link) => (
             <a
@@ -19,7 +22,7 @@ export function Footer() {
           ))}
         </div>
         <p className="font-body-md text-on-surface-variant opacity-50">
-          &copy; 2024 Rhen Lumbo. All rights reserved. Crafted for Excellence.
+          &copy; 2024 Rhen Lumbo. All rights reserved.
         </p>
       </div>
     </footer>
