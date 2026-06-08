@@ -4,85 +4,102 @@ import gsap from 'gsap';
 import { MagneticButton } from '../ui/MagneticButton';
 import heroBg from '../../assets/hero-bg.png';
 
-const staggerItem = (delay: number) => ({
-  initial: { opacity: 0, y: 30 },
+const fadeIn = (delay: number) => ({
+  initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const, delay },
+  transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const, delay },
 });
 
 export function Hero() {
-  const parallaxRef = useRef<HTMLImageElement>(null);
   const heroRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const img = parallaxRef.current;
-    if (!img) return;
-
-    const handleScroll = () => {
-      const scrolled = window.pageYOffset;
-      img.style.transform = `translateY(${scrolled * 0.12}px)`;
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        '.hero-title-line',
-        { y: 100, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1.2, stagger: 0.15, ease: 'power4.out' }
-      );
+      gsap.set('.hero-line', { y: 80, opacity: 0 });
+
+      gsap.to('.hero-line', {
+        y: 0,
+        opacity: 1,
+        duration: 1,
+        stagger: 0.15,
+        ease: 'power4.out',
+        delay: 0.3,
+      });
     }, heroRef);
 
     return () => ctx.revert();
   }, []);
 
   return (
-    <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden">
-      <div className="absolute inset-0 z-0">
-        <img
-          ref={parallaxRef}
-          src={heroBg}
-          alt="Rhen Lumbo Portrait"
-          className="w-full h-full object-cover opacity-90 transition-all duration-700 parallax-img"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-background/20 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent" />
-      </div>
-
-      <div className="relative z-10 w-full px-5 lg:px-margin-desktop">
-        <div className="max-w-lg">
+    <section ref={heroRef} className="min-h-screen bg-background overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] min-h-screen">
+        {/* Image — top on mobile, right on desktop */}
+        <div className="relative lg:order-2 h-[40vh] sm:h-[50vh] lg:h-screen overflow-hidden">
           <motion.div
-            className="inline-flex items-center gap-2 px-4 py-2 border border-primary/30 rounded-full w-fit mb-8 bg-primary/5"
-            {...staggerItem(0)}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute inset-0"
           >
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-label-caps font-label-caps text-primary uppercase">
-              Available for Internship
-            </span>
+            <img
+              src={heroBg}
+              alt=""
+              className="w-full h-full object-cover"
+            />
           </motion.div>
+        </div>
 
-          <h1 className="font-display-2xl text-5xl sm:text-display-2xl mb-8">
-            <span className="hero-title-line inline-block">RHEN</span>{' '}
-            <br />
-            <span className="hero-title-line inline-block text-primary-container">LUMBO</span>
-          </h1>
+        {/* Text — bottom on mobile, left on desktop */}
+        <div className="lg:order-1 flex items-center px-5 lg:pl-margin-desktop lg:pr-16 py-16 lg:py-0">
+          <div className="w-full max-w-lg">
+            {/* Badge */}
+            <motion.div
+              {...fadeIn(0)}
+              className="inline-flex items-center gap-2.5 px-4 py-2 border border-primary/20 rounded-full mb-10 bg-primary/[0.04]"
+            >
+              <span className="w-2 h-2 rounded-full bg-primary" />
+              <span className="font-label-caps text-label-caps text-primary uppercase">
+                Available for Projects
+              </span>
+            </motion.div>
 
-          <motion.p
-            className="font-body-lg text-body-lg text-on-surface-variant mb-12"
-            {...staggerItem(0.2)}
-          >
-            Crafting cinematic digital experiences through rigorous full-stack engineering and
-            avant-garde UI design. Specializing in high-performance web applications that bridge
-            the gap between imagination and execution.
-          </motion.p>
+            {/* Headline */}
+            <h1 ref={titleRef} className="mb-8">
+              <div className="overflow-hidden mb-1">
+                <span className="hero-line inline-block font-headline-lg text-headline-lg sm:text-5xl lg:text-headline-lg text-white leading-[1.15] tracking-tight">
+                  Websites that turn
+                </span>
+              </div>
+              <div className="overflow-hidden">
+                <span className="hero-line inline-block font-headline-lg text-headline-lg sm:text-5xl lg:text-headline-lg text-primary leading-[1.15] tracking-tight">
+                  visitors into customers.
+                </span>
+              </div>
+            </h1>
 
-          <motion.div className="flex gap-6" {...staggerItem(0.3)}>
-            <MagneticButton variant="primary">View Work</MagneticButton>
-            <MagneticButton>Read Story</MagneticButton>
-          </motion.div>
+            {/* Supporting copy */}
+            <motion.p
+              {...fadeIn(0.7)}
+              className="font-body-lg text-body-lg text-on-surface-variant mb-10 leading-relaxed"
+            >
+              High-performance booking systems, resort websites, and web
+              applications for brands that mean business.
+            </motion.p>
+
+            {/* Calls to action */}
+            <motion.div
+              {...fadeIn(0.9)}
+              className="flex flex-wrap gap-4"
+            >
+              <MagneticButton variant="primary">
+                Get a Free Consultation
+              </MagneticButton>
+              <MagneticButton variant="ghost">
+                View My Work
+              </MagneticButton>
+            </motion.div>
+          </div>
         </div>
       </div>
     </section>

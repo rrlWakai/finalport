@@ -8,7 +8,7 @@ import { Contact } from '../components/sections/Contact';
 
 export function Home() {
   return (
-    <main className="max-w-container-max mx-auto">
+    <main>
       <Hero />
       <Journey />
       <Projects />
