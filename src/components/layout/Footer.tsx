@@ -1,0 +1,27 @@
+import { socialLinks } from '../../data';
+
+export function Footer() {
+  return (
+    <footer className="w-full py-section-gap border-t border-white/5 bg-surface-container-lowest">
+      <div className="flex flex-col items-center justify-center space-y-8 px-5 lg:px-margin-desktop">
+        <div className="font-display-xl text-headline-lg text-on-surface">
+          RHEN LUMBO
+        </div>
+        <div className="flex gap-12">
+          {socialLinks.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              className="text-on-surface-variant font-body-md hover:text-primary hover:translate-y-[-2px] transition-all duration-300"
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+        <p className="font-body-md text-on-surface-variant opacity-50">
+          &copy; 2024 Rhen Lumbo. All rights reserved. Crafted for Excellence.
+        </p>
+      </div>
+    </footer>
+  );
+}
