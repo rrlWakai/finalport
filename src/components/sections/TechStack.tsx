@@ -1,51 +1,173 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import type { ElementType } from 'react';
-import { Code2, Terminal, Palette, Database, Network } from 'lucide-react';
-import { techStack } from '../../data';
+import type { IconType } from 'react-icons';
+import {
+  SiReact,
+  SiTypescript,
+  SiJavascript,
+  SiHtml5,
+  SiCss,
+  SiTailwindcss,
+  SiVite,
+  SiNodedotjs,
+  SiPhp,
+  SiOpenjdk,
+  SiSharp,
+  SiPostgresql,
+  SiMysql,
+  SiSupabase,
+  SiFlutter,
+  SiDart,
+} from 'react-icons/si';
+import { categories, techStack as techStackData } from '../../data';
 import { SectionHeading } from '../ui/SectionHeading';
-import { useTiltEffect } from '../../hooks/useTiltEffect';
+import type { TechItem } from '../../types';
 
-const iconMap: Record<string, ElementType> = {
-  Code2,
-  Terminal,
-  Palette,
-  Database,
-  Network,
+const iconMap: Record<string, IconType> = {
+  SiReact,
+  SiTypescript,
+  SiJavascript,
+  SiHtml5,
+  SiCss,
+  SiTailwindcss,
+  SiVite,
+  SiNodedotjs,
+  SiPhp,
+  SiOpenjdk,
+  SiSharp,
+  SiPostgresql,
+  SiMysql,
+  SiSupabase,
+  SiFlutter,
+  SiDart,
 };
 
-function TechCard({ name, icon, delay }: { name: string; icon: string; delay: number }) {
-  const tiltRef = useTiltEffect<HTMLDivElement>();
-  const Icon = iconMap[icon] || Code2;
+const groupByCategory = (categoryId: string) =>
+  techStackData.filter((t) => t.category === categoryId);
+
+function TechPill({ item, index }: { item: TechItem; index: number }) {
+  const Icon = iconMap[item.iconName];
+  if (!Icon) return null;
 
   return (
-    <motion.div
-      ref={tiltRef}
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: delay * 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="bg-black/[0.03] backdrop-blur-xl border border-black/10 p-8 rounded-2xl w-48 h-48 flex flex-col items-center justify-center gap-4 group hover:border-primary/50 transition-all duration-500 cursor-default"
-      style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
+    <div
+      key={`${item.id}-${index}`}
+      className="group/pill flex flex-col items-center gap-3 px-6 py-5 rounded-2xl transition-all duration-300 cursor-default shrink-0 hover:scale-110 hover:shadow-[0_0_30px_-8px_rgba(180,83,9,0.2)]"
     >
-      <div className="w-12 h-12 flex items-center justify-center bg-black/5 rounded-lg group-hover:bg-primary/20 transition-colors">
-        <Icon className="w-6 h-6 text-on-surface-variant group-hover:text-primary transition-colors" />
+      <div className="text-on-surface-variant group-hover/pill:text-primary transition-colors duration-300">
+        <Icon className="w-12 h-12 sm:w-14 sm:h-14" aria-label={item.name} />
       </div>
-      <span className="font-label-caps text-label-caps uppercase tracking-widest">
-        {name}
+      <span className="font-body-md text-body-md text-on-surface-variant/60 group-hover/pill:text-on-surface transition-colors duration-300 whitespace-nowrap text-center">
+        {item.name}
       </span>
-    </motion.div>
+    </div>
+  );
+}
+
+function CarouselRow({
+  items,
+  direction,
+  speed,
+  paused,
+}: {
+  items: TechItem[];
+  direction: 'left' | 'right';
+  speed: number;
+  paused: boolean;
+}) {
+  const duration = speed * (items.length / 4);
+
+  return (
+    <div
+      className="flex overflow-hidden select-none"
+      style={{
+        maskImage: 'linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)',
+      }}
+    >
+      <div
+        className="flex gap-2 sm:gap-4 shrink-0"
+        style={{
+          animation: `scroll-${direction} ${duration}s linear infinite`,
+          animationPlayState: paused ? 'paused' : 'running',
+          willChange: 'transform',
+        }}
+      >
+        {[...items, ...items].map((item, i) => (
+          <TechPill key={`${item.id}-${i}`} item={item} index={i} />
+        ))}
+      </div>
+      <div
+        className="flex gap-2 sm:gap-4 shrink-0"
+        style={{
+          animation: `scroll-${direction} ${duration}s linear infinite`,
+          animationPlayState: paused ? 'paused' : 'running',
+          willChange: 'transform',
+        }}
+        aria-hidden
+      >
+        {[...items, ...items].map((item, i) => (
+          <TechPill key={`clone-${item.id}-${i}`} item={item} index={i} />
+        ))}
+      </div>
+    </div>
   );
 }
 
 export function TechStack() {
+  const [paused, setPaused] = useState(false);
+
   return (
-    <section className="py-section-gap overflow-hidden px-5 lg:px-margin-desktop">
-      <SectionHeading label="The Arsenal" className="mb-16 text-center" />
-      <div className="flex flex-wrap justify-center gap-8">
-        {techStack.map((tech) => (
-          <TechCard key={tech.id} name={tech.name} icon={tech.icon} delay={tech.delay} />
-        ))}
+    <section
+      className="py-section-gap overflow-hidden px-5 lg:px-margin-desktop"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <SectionHeading label="The Stack" className="mb-4 text-center" />
+        <p className="font-body-lg text-body-lg text-on-surface-variant text-center mb-16 max-w-2xl mx-auto">
+          Technologies I use to build modern, high-performance web applications.
+        </p>
+      </motion.div>
+
+      <div className="space-y-10">
+        {categories.map((cat, i) => {
+          const catItems = groupByCategory(cat.id);
+          if (catItems.length === 0) return null;
+          return (
+            <div key={cat.id}>
+              <span
+                className="block font-label-caps text-label-caps text-primary uppercase tracking-widest mb-4"
+                style={{ paddingLeft: 'clamp(0px, calc((100vw - 1440px) / 2), 80px)' }}
+              >
+                {cat.label}
+              </span>
+              <CarouselRow
+                items={catItems}
+                direction={i % 2 === 0 ? 'left' : 'right'}
+                speed={28 - i * 2}
+                paused={paused}
+              />
+            </div>
+          );
+        })}
       </div>
+
+      <style>{`
+        @keyframes scroll-left {
+          0% { transform: translate3d(0, 0, 0); }
+          100% { transform: translate3d(-50%, 0, 0); }
+        }
+        @keyframes scroll-right {
+          0% { transform: translate3d(-50%, 0, 0); }
+          100% { transform: translate3d(0, 0, 0); }
+        }
+      `}</style>
     </section>
   );
 }

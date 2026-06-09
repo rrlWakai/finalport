@@ -1,4 +1,4 @@
-import type { Project, TechItem, Philosophy, ServiceItem, FaqItem, NavLink, SocialLink } from '../types';
+import type { Project, TechItem, TechCategory, Philosophy, ServiceItem, FaqItem, NavLink, SocialLink } from '../types';
 
 export const navLinks: NavLink[] = [
   { label: 'Services', href: '#services' },
@@ -47,12 +47,31 @@ export const projects: Project[] = [
   },
 ];
 
+export const categories: { id: TechCategory; label: string }[] = [
+  { id: 'Frontend', label: 'Frontend' },
+  { id: 'Backend', label: 'Backend' },
+  { id: 'Databases', label: 'Databases' },
+  { id: 'Mobile', label: 'Mobile Development' },
+];
+
 export const techStack: TechItem[] = [
-  { id: 'react', name: 'React', icon: 'Code2', delay: 0 },
-  { id: 'typescript', name: 'TypeScript', icon: 'Terminal', delay: 0.5 },
-  { id: 'tailwind', name: 'Tailwind CSS', icon: 'Palette', delay: 1 },
-  { id: 'supabase', name: 'Supabase', icon: 'Database', delay: 1.5 },
-  { id: 'nodejs', name: 'Node.js', icon: 'Network', delay: 2 },
+  { id: 'react', name: 'React', category: 'Frontend', iconName: 'SiReact' },
+  { id: 'typescript', name: 'TypeScript', category: 'Frontend', iconName: 'SiTypescript' },
+  { id: 'javascript', name: 'JavaScript', category: 'Frontend', iconName: 'SiJavascript' },
+  { id: 'html5', name: 'HTML5', category: 'Frontend', iconName: 'SiHtml5' },
+  { id: 'css3', name: 'CSS3', category: 'Frontend', iconName: 'SiCss' },
+  { id: 'tailwind', name: 'Tailwind CSS', category: 'Frontend', iconName: 'SiTailwindcss' },
+  { id: 'vite', name: 'Vite', category: 'Frontend', iconName: 'SiVite' },
+  { id: 'nodejs', name: 'Node.js', category: 'Backend', iconName: 'SiNodedotjs' },
+  { id: 'php', name: 'PHP', category: 'Backend', iconName: 'SiPhp' },
+  { id: 'java', name: 'Java', category: 'Backend', iconName: 'SiOpenjdk' },
+  { id: 'csharp', name: 'C#', category: 'Backend', iconName: 'SiSharp' },
+  { id: 'postgresql', name: 'PostgreSQL', category: 'Databases', iconName: 'SiPostgresql' },
+  { id: 'mysql', name: 'MySQL', category: 'Databases', iconName: 'SiMysql' },
+  { id: 'supabase', name: 'Supabase', category: 'Databases', iconName: 'SiSupabase' },
+  { id: 'react-native', name: 'React Native', category: 'Mobile', iconName: 'SiReact' },
+  { id: 'flutter', name: 'Flutter', category: 'Mobile', iconName: 'SiFlutter' },
+  { id: 'dart', name: 'Dart', category: 'Mobile', iconName: 'SiDart' },
 ];
 
 export const philosophies: Philosophy[] = [

@@ -10,11 +10,13 @@ export interface Project {
   ctaIcon?: string;
 }
 
+export type TechCategory = 'Frontend' | 'Backend' | 'Databases' | 'Mobile';
+
 export interface TechItem {
   id: string;
   name: string;
-  icon: string;
-  delay: number;
+  category: TechCategory;
+  iconName: string;
 }
 
 export interface Philosophy {
