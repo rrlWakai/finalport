@@ -1,9 +1,9 @@
 import { Hero } from '../components/sections/Hero';
-import { Journey } from '../components/sections/Journey';
+import { CaseStudy } from '../components/sections/CaseStudy';
 import { Services } from '../components/sections/Services';
 import { Projects } from '../components/sections/Projects';
+import { WhyWorkWithMe } from '../components/sections/WhyWorkWithMe';
 import { TechStack } from '../components/sections/TechStack';
-import { Philosophies } from '../components/sections/Philosophies';
 import { Faq } from '../components/sections/Faq';
 import { Contact } from '../components/sections/Contact';
 
@@ -11,11 +11,11 @@ export function Home() {
   return (
     <main>
       <Hero />
+      <CaseStudy />
       <Services />
       <Projects />
-      <Journey />
+      <WhyWorkWithMe />
       <TechStack />
-      <Philosophies />
       <Faq />
       <Contact />
     </main>

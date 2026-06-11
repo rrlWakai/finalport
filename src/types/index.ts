@@ -8,21 +8,16 @@ export interface Project {
   textVisual?: string;
   cta: string;
   ctaIcon?: string;
+  url?: string;
 }
 
-export type TechCategory = 'Frontend' | 'Backend' | 'Databases' | 'Mobile';
+export type TechCategory = 'Frontend' | 'Backend' | 'Databases' | 'Integrations';
 
 export interface TechItem {
   id: string;
   name: string;
   category: TechCategory;
   iconName: string;
-}
-
-export interface Philosophy {
-  id: string;
-  title: string;
-  description: string;
 }
 
 export interface ServiceItem {
@@ -47,4 +42,17 @@ export interface NavLink {
 export interface SocialLink {
   label: string;
   href: string;
+}
+
+export interface CaseStudy {
+  id: string;
+  title: string;
+  subtitle: string;
+  problem: string;
+  solution: string;
+  features: string[];
+  businessValue: string[];
+  techStack: string[];
+  imageUrl: string;
+  cta: string;
 }

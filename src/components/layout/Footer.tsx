@@ -8,7 +8,7 @@ export function Footer() {
           RHEN LUMBO
         </div>
         <p className="font-body-md text-on-surface-variant">
-          Full-Stack Web Developer — Philippines
+          Web Developer — Booking Systems for Resorts, Villas & Hotels
         </p>
         <div className="flex gap-12">
           {socialLinks.map((link) => (
@@ -21,8 +21,16 @@ export function Footer() {
             </a>
           ))}
         </div>
+        <div className="flex gap-6">
+          <a
+            href="#"
+            className="font-body-md text-on-surface-variant hover:text-primary transition-colors duration-300"
+          >
+            Download Resume
+          </a>
+        </div>
         <p className="font-body-md text-on-surface-variant opacity-50">
-          &copy; 2024 Rhen Lumbo. All rights reserved.
+          &copy; 2026 Rhen Lumbo. All rights reserved.
         </p>
       </div>
     </footer>

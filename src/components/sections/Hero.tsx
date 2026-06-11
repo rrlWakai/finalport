@@ -12,7 +12,6 @@ const fadeIn = (delay: number) => ({
 
 export function Hero() {
   const heroRef = useRef<HTMLElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -44,7 +43,7 @@ export function Hero() {
           >
             <img
               src={heroBg}
-              alt="Rhen Lumbo — Full-Stack Web Developer in the Philippines"
+              alt="Premier Pool House — booking system preview"
               className="w-full h-full object-cover"
             />
           </motion.div>
@@ -60,20 +59,20 @@ export function Hero() {
             >
               <span className="w-2 h-2 rounded-full bg-primary" />
               <span className="font-label-caps text-label-caps text-primary uppercase">
-                Full-Stack Web Developer — Philippines
+                Software Engineer — Booking Systems Specialist
               </span>
             </motion.div>
 
             {/* Headline */}
-            <h1 ref={titleRef} className="mb-6">
+            <h1 className="mb-6">
               <div className="overflow-hidden mb-1">
                 <span className="hero-line inline-block font-headline-lg text-headline-lg sm:text-5xl lg:text-headline-lg text-on-surface leading-[1.15] tracking-tight">
-                  Booking systems, resort
+                  Get More Direct Bookings
                 </span>
               </div>
               <div className="overflow-hidden">
                 <span className="hero-line inline-block font-headline-lg text-headline-lg sm:text-5xl lg:text-headline-lg text-primary leading-[1.15] tracking-tight">
-                  websites, built with React.
+                  for Your Resort
                 </span>
               </div>
             </h1>
@@ -83,9 +82,9 @@ export function Hero() {
               {...fadeIn(0.7)}
               className="font-body-lg text-body-lg text-on-surface-variant mb-10 leading-relaxed"
             >
-              I build custom booking systems, resort websites, and web applications
-              for businesses in the Philippines and worldwide. React. TypeScript.
-              Supabase. Results-driven development that helps you grow online.
+              Custom websites and online reservation systems that help resorts, villas,
+              and hotels reduce OTA commissions, simplify reservations, and increase
+              direct bookings.
             </motion.p>
 
             {/* Calls to action */}
@@ -97,9 +96,17 @@ export function Hero() {
                 Get a Free Consultation
               </MagneticButton>
               <MagneticButton variant="ghost">
-                View My Work
+                View Premier Pool House Case Study
               </MagneticButton>
             </motion.div>
+
+            {/* Trust line */}
+            <motion.p
+              {...fadeIn(1.1)}
+              className="font-body-md text-body-md text-on-surface-variant/60 mt-8"
+            >
+              Real client. Real booking system. Real results.
+            </motion.p>
           </div>
         </div>
       </div>

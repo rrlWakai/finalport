@@ -66,8 +66,8 @@ export function Faq() {
           FAQ
         </span>
         <h2 className="font-display-xl text-4xl sm:text-display-xl mt-4 max-w-3xl">
-          Everything you need to know{' '}
-          <span className="text-primary">about web development.</span>
+          Questions resort owners{' '}
+          <span className="text-primary">usually ask.</span>
         </h2>
       </motion.div>
 

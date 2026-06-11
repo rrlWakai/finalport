@@ -11,14 +11,12 @@ import {
   SiVite,
   SiNodedotjs,
   SiPhp,
-  SiOpenjdk,
-  SiSharp,
   SiPostgresql,
   SiMysql,
   SiSupabase,
-  SiFlutter,
-  SiDart,
 } from 'react-icons/si';
+import { GiPayMoney } from 'react-icons/gi';
+import { VscSymbolRuler } from 'react-icons/vsc';
 import { categories, techStack as techStackData } from '../../data';
 import { SectionHeading } from '../ui/SectionHeading';
 import type { TechItem } from '../../types';
@@ -33,13 +31,11 @@ const iconMap: Record<string, IconType> = {
   SiVite,
   SiNodedotjs,
   SiPhp,
-  SiOpenjdk,
-  SiSharp,
   SiPostgresql,
   SiMysql,
   SiSupabase,
-  SiFlutter,
-  SiDart,
+  SiPaymongo: GiPayMoney,
+  SiApif: VscSymbolRuler,
 };
 
 const groupByCategory = (categoryId: string) =>
@@ -129,9 +125,10 @@ export function TechStack() {
         viewport={{ once: true }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       >
-        <SectionHeading label="The Stack" className="mb-4 text-center" />
+        <SectionHeading label="Built With" className="mb-4 text-center" />
         <p className="font-body-lg text-body-lg text-on-surface-variant text-center mb-16 max-w-2xl mx-auto">
-          Technologies I use to build modern, high-performance web applications.
+          Modern, reliable technology that major hospitality platforms trust — not
+          outdated systems that break or slow you down.
         </p>
       </motion.div>
 
