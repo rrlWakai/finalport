@@ -3,6 +3,7 @@ import { caseStudy } from '../../data';
 import { SectionHeading } from '../ui/SectionHeading';
 import { TechTag } from '../ui/TechTag';
 import { MagneticButton } from '../ui/MagneticButton';
+import { scrollToSection } from '../../lib/scroll';
 import caseImg from '../../assets/case.png';
 
 export function CaseStudy() {
@@ -150,7 +151,7 @@ export function CaseStudy() {
         viewport={{ once: true }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       >
-        <MagneticButton variant="primary">
+        <MagneticButton variant="primary" onClick={() => scrollToSection('contact')}>
           Want a Booking System Like This?
         </MagneticButton>
       </motion.div>

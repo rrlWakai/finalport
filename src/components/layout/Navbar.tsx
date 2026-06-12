@@ -3,6 +3,7 @@ import { Menu, X } from 'lucide-react';
 import { useScrollProgress } from '../../hooks/useScrollProgress';
 import { navLinks } from '../../data';
 import { BookCallButton } from '../ui/MagneticButton';
+import { scrollToSection } from '../../lib/scroll';
 
 export function Navbar() {
   const { activeSection } = useScrollProgress();
@@ -11,15 +12,15 @@ export function Navbar() {
   return (
     <header className="fixed top-0 w-full bg-background/80 backdrop-blur-xl border-b border-black/10 z-50">
       <nav className="flex justify-between items-center w-full px-5 lg:px-margin-desktop py-6 max-w-container-max mx-auto">
-        <a href="#" className="font-display-xl text-body-lg font-bold tracking-tighter text-on-surface">
+        <button onClick={() => scrollToSection('hero')} className="font-display-xl text-body-lg font-bold tracking-tighter text-on-surface hover:text-primary transition-colors">
           RHEN LUMBO
-        </a>
+        </button>
 
         <div className="hidden md:flex gap-8">
           {navLinks.map((link) => (
-            <a
+            <button
               key={link.href}
-              href={link.href}
+              onClick={() => scrollToSection(link.href.slice(1))}
               className={`font-body-md text-body-md transition-colors duration-300 ${
                 activeSection === link.href.slice(1)
                   ? 'text-primary font-bold'
@@ -27,7 +28,7 @@ export function Navbar() {
               }`}
             >
               {link.label}
-            </a>
+            </button>
           ))}
         </div>
 
@@ -47,18 +48,17 @@ export function Navbar() {
       {mobileOpen && (
         <div className="md:hidden bg-surface-container border-t border-black/10 px-5 py-6 space-y-4">
           {navLinks.map((link) => (
-            <a
+            <button
               key={link.href}
-              href={link.href}
-              onClick={() => setMobileOpen(false)}
-              className={`block font-body-md text-body-md transition-colors duration-300 ${
+              onClick={() => { scrollToSection(link.href.slice(1)); setMobileOpen(false); }}
+              className={`block font-body-md text-body-md transition-colors duration-300 w-full text-left ${
                 activeSection === link.href.slice(1)
                   ? 'text-primary font-bold'
                   : 'text-on-surface-variant'
               }`}
             >
               {link.label}
-            </a>
+            </button>
           ))}
           <BookCallButton />
         </div>

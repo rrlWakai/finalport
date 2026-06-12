@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { services } from '../../data';
 import { MagneticButton } from '../ui/MagneticButton';
+import { scrollToSection } from '../../lib/scroll';
 
 const iconMap: Record<string, LucideIcon> = {
   Building2, CalendarCheck, LayoutDashboard, Search,
@@ -66,7 +67,7 @@ export function Services() {
               </div>
 
               <div className="lg:col-span-4 flex lg:justify-end items-start">
-                <MagneticButton variant="ghost">
+                <MagneticButton variant="ghost" onClick={() => scrollToSection('contact')}>
                   Inquire About This Service
                 </MagneticButton>
               </div>

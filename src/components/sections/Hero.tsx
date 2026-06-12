@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
 import { MagneticButton } from '../ui/MagneticButton';
+import { scrollToSection } from '../../lib/scroll';
 import heroBg from '../../assets/hero-bg.png';
 
 const fadeIn = (delay: number) => ({
@@ -31,7 +32,7 @@ export function Hero() {
   }, []);
 
   return (
-    <section ref={heroRef} className="min-h-screen bg-background overflow-hidden">
+    <section ref={heroRef} id="hero" className="min-h-screen bg-background overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] min-h-screen">
         {/* Image — top on mobile, right on desktop */}
         <div className="relative lg:order-2 h-[40vh] sm:h-[50vh] lg:h-screen overflow-hidden">
@@ -92,10 +93,10 @@ export function Hero() {
               {...fadeIn(0.9)}
               className="flex flex-wrap gap-4"
             >
-              <MagneticButton variant="primary">
+              <MagneticButton variant="primary" onClick={() => scrollToSection('contact')}>
                 Get a Free Consultation
               </MagneticButton>
-              <MagneticButton variant="ghost">
+              <MagneticButton variant="ghost" onClick={() => scrollToSection('case-study')}>
                 View Premier Pool House Case Study
               </MagneticButton>
             </motion.div>

@@ -9,10 +9,10 @@ export const navLinks: NavLink[] = [
 ];
 
 export const socialLinks: SocialLink[] = [
-  { label: 'LinkedIn', href: '#' },
-  { label: 'GitHub', href: '#' },
-  { label: 'Twitter', href: '#' },
-  { label: 'Email', href: '#' },
+  { label: 'GitHub', href: 'https://github.com/rrlWakai' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/rhen-rhen-a-lumbo-2b381a393/' },
+  { label: 'Facebook', href: 'https://www.facebook.com/Wakai.Imaushi' },
+  { label: 'Email', href: 'mailto:lumborhenrhena@gmail.com' },
 ];
 
 export const caseStudy: CaseStudy = {

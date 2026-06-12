@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Clock,
@@ -8,13 +8,35 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  CalendarCheck,
+  ArrowLeft,
+  Upload,
+  X,
+  FileText,
 } from 'lucide-react';
 import { MagneticButton } from '../ui/MagneticButton';
+import TurnstileWidget from '../ui/TurnstileWidget';
+import { supabase } from '../../dashboard/lib/supabase';
+import { useToast } from '../../lib/toast';
+import {
+  getAvailability as getAvailabilityData,
+  getBlockedDates,
+  checkSlotAvailability,
+  checkRateLimit,
+  recordSubmission,
+  uploadAttachment,
+} from '../../dashboard/data/service';
+import { sendEmail, fillTemplate } from '../../lib/email';
 
-const TIME_SLOTS = [
-  '9:00 AM', '10:00 AM', '11:00 AM',
-  '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM',
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+const MAX_FILES = 3;
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -37,6 +59,26 @@ const TIMEZONES = [
   { value: 'Pacific/Auckland', label: 'New Zealand Time (NZT)' },
 ];
 
+function generateHourlySlots(start: string, end: string): string[] {
+  const parts1 = start.split(':');
+  const parts2 = end.split(':');
+  const sh = Number(parts1[0]) || 0;
+  const sm = Number(parts1[1]) || 0;
+  const eh = Number(parts2[0]) || 0;
+  const em = Number(parts2[1]) || 0;
+  const slots: string[] = [];
+  let h = sh;
+  let m = sm;
+  while (h < eh || (h === eh && m < em)) {
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    const label = `${hour12}:00 ${period}`;
+    if (m === 0) slots.push(label);
+    h += 1;
+  }
+  return slots;
+}
+
 const fadeUp = (delay: number) => ({
   initial: { opacity: 0, y: 20 },
   whileInView: { opacity: 1, y: 0 },
@@ -47,9 +89,13 @@ const fadeUp = (delay: number) => ({
 function Calendar({
   selectedDate,
   onSelectDate,
+  highlighted,
+  blockedDates,
 }: {
   selectedDate: Date | null;
   onSelectDate: (date: Date) => void;
+  highlighted?: boolean;
+  blockedDates: string[];
 }) {
   const [viewDate, setViewDate] = useState(new Date());
   const year = viewDate.getFullYear();
@@ -70,8 +116,15 @@ function Calendar({
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
+  useEffect(() => {
+    if (highlighted) {
+      const el = document.querySelector('[data-scheduler]');
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [highlighted]);
+
   return (
-    <div>
+    <div data-scheduler>
       <div className="flex items-center justify-between mb-4 sm:mb-5">
         <button
           onClick={() => setViewDate(new Date(year, month - 1, 1))}
@@ -109,21 +162,24 @@ function Calendar({
           const date = new Date(year, month, day);
           const dateStr = date.toDateString();
           const past = date < today;
+          const blocked = blockedDates.includes(date.toISOString().split('T')[0] ?? '');
 
           return (
             <button
               key={dateStr}
               onClick={() => onSelectDate(date)}
-              disabled={past}
+              disabled={past || blocked}
               className={`
                 aspect-square rounded-lg text-xs sm:text-sm font-medium transition-all duration-200
-                ${past
+                ${past || blocked
                   ? 'text-surface-container-highest cursor-not-allowed'
                   : dateStr === selectedStr
-                    ? 'bg-primary text-on-primary shadow-md'
+                    ? 'bg-primary text-on-primary shadow-md ring-2 ring-primary/30'
                     : 'hover:bg-primary-container/50 text-on-surface active:bg-primary-container/70'
                 }
               `}
+              aria-label={`Select ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`}
+              aria-selected={dateStr === selectedStr}
             >
               {day}
             </button>
@@ -137,27 +193,64 @@ function Calendar({
 function TimeSlotPicker({
   selectedSlot,
   onSelectSlot,
+  availableSlots,
+  loading,
 }: {
   selectedSlot: string | null;
   onSelectSlot: (slot: string) => void;
+  availableSlots: string[];
+  loading: boolean;
 }) {
+  if (loading) {
+    return (
+      <div>
+        <h4 className="font-display-xl text-xs sm:text-sm font-semibold text-on-surface mb-2.5 sm:mb-3">
+          Available Times
+        </h4>
+        <div className="flex items-center justify-center py-8 text-xs text-on-surface-variant/60">
+          Loading available slots...
+        </div>
+      </div>
+    );
+  }
+
+  if (availableSlots.length === 0) {
+    return (
+      <div>
+        <h4 className="font-display-xl text-xs sm:text-sm font-semibold text-on-surface mb-2.5 sm:mb-3">
+          Available Times
+        </h4>
+        <div className="rounded-xl bg-surface-container p-4 text-center">
+          <p className="text-xs sm:text-sm text-on-surface-variant font-medium">
+            No available consultation times.
+          </p>
+          <p className="text-[10px] sm:text-xs text-on-surface-variant/60 mt-1">
+            Try a different date or send a message instead.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h4 className="font-display-xl text-xs sm:text-sm font-semibold text-on-surface mb-2.5 sm:mb-3">
         Available Times
       </h4>
       <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-        {TIME_SLOTS.map((slot) => (
+        {availableSlots.map((slot) => (
           <button
             key={slot}
             onClick={() => onSelectSlot(slot)}
             className={`
               py-2.5 sm:py-3 px-2.5 sm:px-3 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200
               ${selectedSlot === slot
-                ? 'bg-primary text-on-primary shadow-md'
+                ? 'bg-primary text-on-primary shadow-md ring-2 ring-primary/30'
                 : 'bg-surface-container text-on-surface-variant hover:bg-primary-container/50 hover:text-on-surface active:bg-primary-container/70'
               }
             `}
+            aria-label={`Select ${slot}`}
+            aria-selected={selectedSlot === slot}
           >
             {slot}
           </button>
@@ -173,46 +266,55 @@ function FormField({
   textarea = false,
   value,
   onChange,
+  error,
+  required,
 }: {
   placeholder: string;
   type?: string;
   textarea?: boolean;
   value: string;
   onChange: (v: string) => void;
+  error?: string;
+  required?: boolean;
 }) {
   const base =
-    'w-full bg-transparent border-b border-outline/40 py-3 sm:py-3.5 focus:outline-none focus:border-primary transition-all placeholder:text-on-surface-variant/40 font-body-md text-body-md text-on-surface';
+    'w-full bg-transparent border-b py-3 sm:py-3.5 focus:outline-none focus:border-primary transition-all placeholder:text-on-surface-variant/40 font-body-md text-body-md text-on-surface';
 
-  if (textarea) {
-    return (
-      <div className="relative group">
+  const input = (extra: string) => (
+    <div className="relative group">
+      {textarea ? (
         <textarea
-          placeholder={placeholder}
+          placeholder={`${placeholder}${required ? ' *' : ''}`}
           rows={2}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`${base} resize-none`}
+          className={`${base} resize-none ${extra} ${error ? 'border-error' : 'border-outline/40'}`}
+          aria-required={required}
+          aria-invalid={!!error}
         />
-        <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-primary group-focus-within:w-full transition-all duration-500" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative group">
-      <input
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={base}
-      />
-      <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-primary group-focus-within:w-full transition-all duration-500" />
+      ) : (
+        <input
+          type={type}
+          placeholder={`${placeholder}${required ? ' *' : ''}`}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`${base} ${extra} ${error ? 'border-error' : 'border-outline/40'}`}
+          aria-required={required}
+          aria-invalid={!!error}
+        />
+      )}
+      <div className={`absolute bottom-0 left-0 h-0.5 w-0 group-focus-within:w-full transition-all duration-500 ${error ? 'bg-error w-full' : 'bg-primary'}`} />
+      {error && (
+        <p className="text-[10px] text-error mt-1">{error}</p>
+      )}
     </div>
   );
+
+  return input('');
 }
 
 export function Contact() {
+  const { addToast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [timezone, setTimezone] = useState(
@@ -225,20 +327,353 @@ export function Contact() {
     phone: '',
     description: '',
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [highlight, setHighlight] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [blockedDateStrs, setBlockedDateStrs] = useState<string[]>([]);
+  const [isConfigured, setIsConfigured] = useState(true);
+  const [configError, setConfigError] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+  const useTurnstile = !!turnstileSiteKey;
 
   const step = selectedDate && selectedSlot ? 2 : 1;
 
-  const updateForm = (field: string, value: string) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === '#contact' || hash === '#schedule') {
+      setHighlight(true);
+    }
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    const configured = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+    setIsConfigured(configured);
+    if (!configured) {
+      setConfigError(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      if (!isConfigured) return;
+      try {
+        const blocked = await getBlockedDates();
+        setBlockedDateStrs(blocked.map((b) => b.date));
+      } catch {
+        // silent
+      }
+    })();
+  }, [isConfigured]);
+
+  useEffect(() => {
+    if (!selectedDate || !isConfigured) {
+      setAvailableSlots([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      setSlotsLoading(true);
+      try {
+        const dayOfWeek = selectedDate.getDay();
+        const availability = await getAvailabilityData();
+        const dayAvail = availability.find((a) => a.day_of_week === dayOfWeek);
+        if (!dayAvail || !dayAvail.is_available) {
+          if (!cancelled) setAvailableSlots([]);
+          return;
+        }
+
+        const allSlots = generateHourlySlots(dayAvail.start_time, dayAvail.end_time);
+
+        const dateStr = selectedDate.toISOString().split('T')[0] ?? '';
+
+        const { data: existing } = await supabase
+          .from('consultations')
+          .select('consultation_time')
+          .eq('consultation_date', dateStr)
+          .in('status', ['pending', 'confirmed']);
+
+        const bookedTimes = new Set((existing ?? []).map((r) => r.consultation_time));
+
+        const freeSlots = allSlots.filter((s) => !bookedTimes.has(s));
+
+        if (!cancelled) setAvailableSlots(freeSlots);
+      } catch {
+        if (!cancelled) setAvailableSlots([]);
+      } finally {
+        if (!cancelled) setSlotsLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [selectedDate, isConfigured]);
+
+  const updateForm = (field: string, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
   };
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!form.name.trim()) e.name = 'Name is required';
+    if (!form.property.trim()) e.property = 'Property name is required';
+    if (!form.email.trim()) e.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Invalid email address';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files ?? []);
+    const combined = [...files, ...selected].slice(0, MAX_FILES);
+    const valid = combined.filter((f) => {
+      if (!ALLOWED_FILE_TYPES.includes(f.type)) {
+        addToast(`"${f.name}" has an unsupported file type.`, 'error');
+        return false;
+      }
+      if (f.size > MAX_FILE_SIZE) {
+        addToast(`"${f.name}" exceeds the 20 MB limit.`, 'error');
+        return false;
+      }
+      return true;
+    });
+    setFiles(valid);
+    e.target.value = '';
+  };
+
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = useCallback(async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const honeypot = (event.target as HTMLFormElement).website?.value;
+    if (honeypot) return;
+
+    if (!validate()) return;
+    if (!selectedDate || !selectedSlot) return;
+
+    const rateCheck = checkRateLimit();
+    if (!rateCheck.allowed) {
+      addToast(rateCheck.message ?? 'Too many requests. Please try again later.', 'error');
+      return;
+    }
+
+    if (useTurnstile && !turnstileToken) {
+      addToast('Please complete the security verification.', 'error');
+      return;
+    }
+
+    setSubmitting(true);
+    setUploading(files.length > 0);
+
+    try {
+      if (!isConfigured) {
+        setConfigError(true);
+        addToast('Supabase is not configured. Booking cannot be saved.', 'error');
+        return;
+      }
+
+      const consultationDate = selectedDate.toISOString().split('T')[0] ?? '';
+
+      const available = await checkSlotAvailability(consultationDate, selectedSlot);
+      if (!available) {
+        addToast('This time slot has just been booked. Please choose another.', 'error');
+        setSelectedSlot(null);
+        return;
+      }
+
+      const consultResult = await supabase
+        .from('consultations')
+        .insert({
+          name: form.name.trim(),
+          property_name: form.property.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          consultation_date: consultationDate,
+          consultation_time: selectedSlot,
+          status: 'pending',
+          notes: form.description.trim(),
+        } as never)
+        .select()
+        .single();
+
+      if (consultResult.error) throw consultResult.error;
+      const newConsultation = consultResult.data as { id: string } | null;
+      const consultationId = newConsultation?.id ?? '';
+
+      if (files.length > 0 && consultationId) {
+        for (const file of files) {
+          const result = await uploadAttachment(consultationId, file);
+          if (!result) throw new Error(`Failed to upload ${file.name}`);
+        }
+      }
+
+      await supabase.from('leads').insert({
+        name: form.name.trim(),
+        property_name: form.property.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        location: '',
+        challenge: form.description.trim() || 'New inquiry from consultation scheduler',
+        budget: '',
+        source: 'Website',
+        stage: 'new_inquiry',
+        notes: `Scheduled consultation on ${consultationDate} at ${selectedSlot}`,
+      } as never);
+
+      await supabase.from('activity_logs').insert({
+        action: `New consultation booked - ${form.property.trim()}${files.length > 0 ? ` with ${files.length} attachment(s)` : ''}`,
+        entity_type: 'consultation',
+        entity_id: consultationId || consultationDate,
+      } as never);
+
+      try {
+        const confirmHtml = fillTemplate(
+          `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#333">
+<h2 style="color:#166534;margin-bottom:16px">Consultation Confirmed</h2>
+<p>Hi {{name}},</p>
+<p>Thank you for scheduling a consultation.</p>
+<table style="width:100%;border-collapse:collapse;margin:16px 0">
+<tr><td style="padding:8px 12px;background:#f3f4f6;font-weight:600">Property</td><td style="padding:8px 12px">{{property_name}}</td></tr>
+<tr><td style="padding:8px 12px;background:#f3f4f6;font-weight:600">Date</td><td style="padding:8px 12px">{{consultation_date}}</td></tr>
+<tr><td style="padding:8px 12px;background:#f3f4f6;font-weight:600">Time</td><td style="padding:8px 12px">{{consultation_time}}</td></tr>
+</table>
+<p>I will contact you shortly to confirm.</p>
+<p style="margin-top:16px;color:#6b7280;font-size:14px">— Rhen</p>
+</div>`,
+          {
+            name: form.name.trim(),
+            property_name: form.property.trim(),
+            consultation_date: consultationDate,
+            consultation_time: selectedSlot,
+          },
+        );
+        await sendEmail(form.email.trim(), 'Consultation Confirmed', confirmHtml);
+        await supabase.from('activity_logs').insert({
+          action: `Confirmation email sent to ${form.email.trim()} for ${form.property.trim()}`,
+          entity_type: 'consultation',
+          entity_id: consultationId || consultationDate,
+        } as never);
+      } catch {
+        try {
+          await supabase.from('activity_logs').insert({
+            action: `Confirmation email failed for ${form.email.trim()}`,
+            entity_type: 'consultation',
+            entity_id: consultationId || consultationDate,
+          } as never);
+        } catch { /* skip */ }
+      }
+
+      recordSubmission();
+
+      setSubmitted(true);
+      addToast('Consultation scheduled successfully!', 'success');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      addToast(message, 'error');
+      setTurnstileResetKey((k) => k + 1);
+      setTurnstileToken(null);
+    } finally {
+      setSubmitting(false);
+      setUploading(false);
+    }
+  }, [selectedDate, selectedSlot, form, files, turnstileToken, useTurnstile, isConfigured, addToast, validate]);
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
     setSelectedSlot(null);
   };
+
+  const handleReset = () => {
+    setSelectedDate(null);
+    setSelectedSlot(null);
+    setForm({ name: '', property: '', email: '', phone: '', description: '' });
+    setErrors({});
+    setFiles([]);
+    setTurnstileToken(null);
+    setTurnstileResetKey((k) => k + 1);
+    setSubmitted(false);
+  };
+
+  if (submitted) {
+    return (
+      <section className="py-section-gap px-5 lg:px-margin-desktop" id="contact">
+        <div className="max-w-xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto mb-6">
+              <CalendarCheck size={32} className="text-emerald-600" />
+            </div>
+            <h2 className="font-display-xl text-2xl sm:text-3xl font-semibold text-on-surface mb-3">
+              Your consultation has been scheduled successfully!
+            </h2>
+            <div className="bg-surface-container rounded-xl p-4 mb-6 inline-block text-left">
+              <p className="font-body-md text-sm text-on-surface-variant mb-1">
+                <span className="font-medium text-on-surface">Date:</span>{' '}
+                {selectedDate?.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </p>
+              <p className="font-body-md text-sm text-on-surface-variant mb-1">
+                <span className="font-medium text-on-surface">Time:</span>{' '}
+                {selectedSlot}
+              </p>
+              <p className="font-body-md text-sm text-on-surface-variant">
+                <span className="font-medium text-on-surface">Timezone:</span>{' '}
+                {timezone}
+              </p>
+            </div>
+            <MagneticButton variant="primary" onClick={handleReset}>
+              Schedule Another Consultation
+            </MagneticButton>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
+  if (configError) {
+    return (
+      <section className="py-section-gap px-5 lg:px-margin-desktop" id="contact">
+        <div className="max-w-xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-6">
+              <CalendarCheck size={32} className="text-red-500" />
+            </div>
+            <h2 className="font-display-xl text-2xl sm:text-3xl font-semibold text-on-surface mb-3">
+              Booking system is not configured
+            </h2>
+            <p className="font-body-md text-sm text-on-surface-variant mb-8">
+              The database connection has not been set up. Please contact the site owner directly.
+            </p>
+            <MagneticButton variant="primary" onClick={() => setConfigError(false)}>
+              Try Again
+            </MagneticButton>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-section-gap px-5 lg:px-margin-desktop" id="contact">
@@ -319,7 +754,7 @@ export function Contact() {
           </motion.div>
         </div>
 
-        <motion.div className="lg:col-span-7" {...fadeUp(0)}>
+        <motion.div className="lg:col-span-7" {...fadeUp(0)} id="scheduler">
           <div className="rounded-2xl border border-outline/40 bg-surface p-5 sm:p-7 lg:p-8 shadow-sm">
             <div className="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-6">
               {[1, 2].map((s) => (
@@ -369,7 +804,7 @@ export function Contact() {
                     <select
                       value={timezone}
                       onChange={(e) => setTimezone(e.target.value)}
-                      className="w-full bg-surface-container border border-outline/40 rounded-xl px-2.5 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-on-surface font-body-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all appearance-none"
+                      className="w-full bg-surface-container border border-outline/40 rounded-xl px-2.5 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-on-surface font-body-md focus:outline-none focus:ring-1 focus:ring-primary transition-all appearance-none"
                     >
                       {TIMEZONES.map((tz) => (
                         <option key={tz.value} value={tz.value}>
@@ -383,10 +818,14 @@ export function Contact() {
                     <Calendar
                       selectedDate={selectedDate}
                       onSelectDate={handleDateSelect}
+                      highlighted={highlight}
+                      blockedDates={blockedDateStrs}
                     />
                     <TimeSlotPicker
                       selectedSlot={selectedSlot}
                       onSelectSlot={setSelectedSlot}
+                      availableSlots={availableSlots}
+                      loading={slotsLoading}
                     />
                   </div>
                 </motion.div>
@@ -419,23 +858,33 @@ export function Contact() {
                     </div>
                     <button
                       onClick={() => setSelectedSlot(null)}
-                      className="text-xs sm:text-sm font-medium text-primary hover:underline shrink-0"
+                      className="text-xs sm:text-sm font-medium text-primary hover:underline shrink-0 flex items-center gap-1"
+                      aria-label="Change date and time"
                     >
+                      <ArrowLeft size={12} />
                       Change
                     </button>
                   </div>
 
-                  <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+                  <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5" noValidate>
+                    <div style={{ position: 'absolute', left: '-9999px' }} aria-hidden="true">
+                      <label htmlFor="website">Website</label>
+                      <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                       <FormField
                         placeholder="Your Name"
                         value={form.name}
                         onChange={(v) => updateForm('name', v)}
+                        error={errors.name}
+                        required
                       />
                       <FormField
                         placeholder="Property Name"
                         value={form.property}
                         onChange={(v) => updateForm('property', v)}
+                        error={errors.property}
+                        required
                       />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
@@ -444,6 +893,8 @@ export function Contact() {
                         type="email"
                         value={form.email}
                         onChange={(v) => updateForm('email', v)}
+                        error={errors.email}
+                        required
                       />
                       <FormField
                         placeholder="Phone Number"
@@ -458,8 +909,65 @@ export function Contact() {
                       value={form.description}
                       onChange={(v) => updateForm('description', v)}
                     />
-                    <MagneticButton variant="primary" type="submit">
-                      Schedule Consultation
+
+                    <div>
+                      <label className="block font-display-xl text-[10px] sm:text-xs font-semibold text-on-surface-variant mb-1.5 sm:mb-2 uppercase tracking-wider">
+                        Attachments (optional)
+                      </label>
+                      <p className="text-[10px] sm:text-xs text-on-surface-variant/60 mb-2">
+                        Share references, floor plans, or screenshots. PDF, PNG, JPG, WEBP, DOCX — max 20 MB each, up to 3 files.
+                      </p>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {files.map((file, index) => (
+                          <div
+                            key={`${file.name}-${file.size}`}
+                            className="flex items-center gap-1.5 bg-surface-container rounded-lg px-2.5 py-1.5 text-xs"
+                          >
+                            <FileText size={12} className="text-primary shrink-0" />
+                            <span className="text-on-surface truncate max-w-[120px] sm:max-w-[180px]">{file.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeFile(index)}
+                              className="text-on-surface-variant hover:text-error transition-colors"
+                              aria-label={`Remove ${file.name}`}
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                        {files.length < MAX_FILES && (
+                          <label className="flex items-center gap-1.5 bg-surface-container rounded-lg px-2.5 py-1.5 text-xs text-primary cursor-pointer hover:bg-surface-container-highest transition-colors">
+                            <Upload size={12} />
+                            Add File
+                            <input
+                              type="file"
+                              accept=".pdf,.png,.jpg,.jpeg,.webp,.docx"
+                              onChange={handleFileChange}
+                              className="hidden"
+                              aria-label="Upload attachment"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
+                    {useTurnstile && (
+                      <div key={turnstileResetKey} className="flex justify-center min-h-[65px]">
+                        <TurnstileWidget
+                          siteKey={turnstileSiteKey}
+                          onVerify={setTurnstileToken}
+                          onExpire={() => setTurnstileToken(null)}
+                        />
+                      </div>
+                    )}
+
+                    <MagneticButton
+                      variant="primary"
+                      type="submit"
+                      loading={submitting}
+                      disabled={submitting}
+                    >
+                      {uploading ? 'Uploading files...' : submitting ? 'Scheduling...' : 'Schedule Consultation'}
                     </MagneticButton>
                   </form>
                 </motion.div>
