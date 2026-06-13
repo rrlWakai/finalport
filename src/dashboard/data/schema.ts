@@ -76,6 +76,14 @@ export interface ConsultationAttachment {
   created_at: string;
 }
 
+export interface ConsultationLink {
+  id: string;
+  consultation_id: string;
+  label: string;
+  url: string;
+  created_at: string;
+}
+
 export interface DashboardUser {
   id: string;
   name: string;
@@ -95,6 +103,7 @@ export type Database = {
       blocked_dates: { Row: BlockedDate };
       email_templates: { Row: EmailTemplate };
       consultation_attachments: { Row: ConsultationAttachment };
+      consultation_links: { Row: ConsultationLink };
     };
   };
 };

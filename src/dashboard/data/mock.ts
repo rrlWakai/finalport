@@ -1,4 +1,4 @@
-import type { Consultation, Lead, Message, Availability, ActivityLog, BlockedDate, EmailTemplate } from './schema';
+import type { Consultation, Lead, Message, Availability, ActivityLog, BlockedDate, EmailTemplate, ConsultationLink } from './schema';
 
 export const mockConsultations: Consultation[] = [
   {
@@ -442,6 +442,30 @@ Let's build something great together!
 Best regards,
 Rhen Lumbo`,
     created_at: '2026-02-01T00:00:00Z',
+  },
+];
+
+export const mockConsultationLinks: ConsultationLink[] = [
+  {
+    id: '1',
+    consultation_id: '1',
+    label: 'Google Drive — Bluewater Plans',
+    url: 'https://drive.google.com/drive/folders/abc123',
+    created_at: '2026-06-10T08:30:00Z',
+  },
+  {
+    id: '2',
+    consultation_id: '1',
+    label: 'Figma Design Mockups',
+    url: 'https://figma.com/file/xyz456',
+    created_at: '2026-06-10T08:35:00Z',
+  },
+  {
+    id: '3',
+    consultation_id: '3',
+    label: 'Existing Website',
+    url: 'https://thepearlpalawan.com',
+    created_at: '2026-06-12T09:00:00Z',
   },
 ];
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Search, Eye, XCircle, CheckCircle, Loader2, Trash2, Edit3, Download, FileText, ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Eye, XCircle, CheckCircle, Loader2, Trash2, Edit3, Download, FileText, ImageIcon, ChevronLeft, ChevronRight, Link2, ExternalLink, Copy } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Select } from '../components/ui/select';
@@ -17,9 +17,11 @@ import {
   getAttachments,
   getAttachmentUrl,
   deleteAttachment,
+  getConsultationLinks,
+  deleteConsultationLink,
   sanitize,
 } from '../data/service';
-import { CONSULTATION_STATUS_LABELS, type Consultation, type ConsultationAttachment } from '../data/schema';
+import { CONSULTATION_STATUS_LABELS, type Consultation, type ConsultationAttachment, type ConsultationLink } from '../data/schema';
 import { useToast } from '../../lib/toast';
 
 const PAGE_SIZE = 20;
@@ -52,6 +54,9 @@ export function Consultations() {
   const [attachments, setAttachments] = useState<ConsultationAttachment[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(false);
   const [confirmDeleteAttachment, setConfirmDeleteAttachment] = useState<ConsultationAttachment | null>(null);
+  const [links, setLinks] = useState<ConsultationLink[]>([]);
+  const [linksLoading, setLinksLoading] = useState(false);
+  const [confirmDeleteLink, setConfirmDeleteLink] = useState<ConsultationLink | null>(null);
   const { addToast } = useToast();
 
   const todayStr = new Date().toISOString().split('T')[0] ?? '';
@@ -204,18 +209,39 @@ export function Consultations() {
     }
   };
 
+  const handleDeleteLink = async () => {
+    if (!confirmDeleteLink) return;
+    try {
+      await deleteConsultationLink(confirmDeleteLink.id);
+      setLinks((prev) => prev.filter((l) => l.id !== confirmDeleteLink.id));
+      await createActivityLog({
+        action: `Resource link deleted - ${confirmDeleteLink.url}`,
+        entity_type: 'consultation',
+        entity_id: confirmDeleteLink.consultation_id,
+      } as never);
+      setConfirmDeleteLink(null);
+      addToast('Link deleted');
+    } catch {
+      addToast('Failed to delete link', 'error');
+    }
+  };
+
   useEffect(() => {
-    if (!selected) { setAttachments([]); return; }
+    if (!selected) { setAttachments([]); setLinks([]); return; }
     let cancelled = false;
     (async () => {
       setAttachmentsLoading(true);
+      setLinksLoading(true);
       try {
-        const data = await getAttachments(selected.id);
-        if (!cancelled) setAttachments(data);
+        const [attData, linkData] = await Promise.all([
+          getAttachments(selected.id),
+          getConsultationLinks(selected.id),
+        ]);
+        if (!cancelled) { setAttachments(attData); setLinks(linkData); }
       } catch {
-        // silent for attachment fetch
+        // silent
       } finally {
-        if (!cancelled) setAttachmentsLoading(false);
+        if (!cancelled) { setAttachmentsLoading(false); setLinksLoading(false); }
       }
     })();
     return () => { cancelled = true; };
@@ -385,6 +411,52 @@ export function Consultations() {
                   <p className="text-sm text-on-surface-variant">{selected.notes}</p>
                 </div>
               )}
+              {links.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Resources &amp; Links</p>
+                  <div className="space-y-1.5">
+                    {links.map((link) => (
+                      <div key={link.id} className="flex items-center gap-2 bg-surface-container rounded-lg px-3 py-2">
+                        <Link2 size={14} className="text-primary shrink-0" />
+                        <span className="flex-1 text-xs text-on-surface truncate">
+                          {link.label || link.url}
+                        </span>
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-primary/80 transition-colors shrink-0"
+                          aria-label={`Open ${link.url}`}
+                        >
+                          <ExternalLink size={14} />
+                        </a>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(link.url);
+                            addToast('Link copied');
+                          }}
+                          className="text-on-surface-variant hover:text-on-surface transition-colors shrink-0"
+                          aria-label="Copy link"
+                        >
+                          <Copy size={14} />
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteLink(link)}
+                          className="text-on-surface-variant hover:text-error transition-colors shrink-0"
+                          aria-label="Delete link"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {linksLoading && (
+                <div className="flex items-center gap-2 text-xs text-on-surface-variant/60">
+                  <Loader2 size={12} className="animate-spin" /> Loading links...
+                </div>
+              )}
               {attachments.length > 0 && (
                 <div>
                   <p className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider mb-1.5">Attachments</p>
@@ -532,6 +604,19 @@ export function Consultations() {
         <div className="flex gap-2 justify-end pt-2">
           <Button variant="ghost" onClick={() => setConfirmDeleteAttachment(null)}>Cancel</Button>
           <Button variant="danger" onClick={handleDeleteAttachment}>Delete</Button>
+        </div>
+      </Dialog>
+
+      <Dialog open={!!confirmDeleteLink} onClose={() => setConfirmDeleteLink(null)}>
+        <DialogHeader>
+          <DialogTitle>Delete Resource Link</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete "{confirmDeleteLink?.label || confirmDeleteLink?.url}"? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex gap-2 justify-end pt-2">
+          <Button variant="ghost" onClick={() => setConfirmDeleteLink(null)}>Cancel</Button>
+          <Button variant="danger" onClick={handleDeleteLink}>Delete</Button>
         </div>
       </Dialog>
     </div>

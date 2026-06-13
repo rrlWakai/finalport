@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { Consultation, Lead, Message, Availability, ActivityLog, EmailTemplate, BlockedDate, ConsultationAttachment } from '../data/schema';
+import type { Consultation, Lead, Message, Availability, ActivityLog, EmailTemplate, BlockedDate, ConsultationAttachment, ConsultationLink } from '../data/schema';
 
 function isConfigured() {
   return !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
@@ -242,6 +242,35 @@ export async function deleteAttachment(attachment: ConsultationAttachment) {
   if (!isConfigured()) return;
   await supabase.storage.from('consultation-attachments').remove([attachment.file_path]);
   await supabase.from('consultation_attachments').delete().eq('id', attachment.id);
+}
+
+// ─── Consultation Links ──────────────────────────────────────────────
+
+export async function getConsultationLinks(consultationId: string): Promise<ConsultationLink[]> {
+  if (!isConfigured()) return [];
+  const { data } = await supabase.from('consultation_links').select('*')
+    .eq('consultation_id', consultationId)
+    .order('created_at', { ascending: true });
+  return (data ?? []) as unknown as ConsultationLink[];
+}
+
+export async function createConsultationLink(
+  consultationId: string,
+  url: string,
+  label?: string,
+): Promise<ConsultationLink | null> {
+  if (!isConfigured()) return null;
+  const { data } = await supabase.from('consultation_links').insert({
+    consultation_id: consultationId,
+    url,
+    label: label ?? '',
+  } as never).select().single();
+  return (data ?? null) as unknown as ConsultationLink | null;
+}
+
+export async function deleteConsultationLink(id: string) {
+  if (!isConfigured()) return;
+  await supabase.from('consultation_links').delete().eq('id', id);
 }
 
 // ─── Rate Limiting ───────────────────────────────────────────────────

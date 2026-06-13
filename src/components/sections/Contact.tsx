@@ -13,6 +13,8 @@ import {
   Upload,
   X,
   FileText,
+  Link2,
+  ExternalLink,
 } from 'lucide-react';
 import { MagneticButton } from '../ui/MagneticButton';
 import TurnstileWidget from '../ui/TurnstileWidget';
@@ -25,6 +27,7 @@ import {
   checkRateLimit,
   recordSubmission,
   uploadAttachment,
+  createConsultationLink,
 } from '../../dashboard/data/service';
 import { sendEmail, fillTemplate } from '../../lib/email';
 
@@ -338,6 +341,10 @@ export function Contact() {
   const [configError, setConfigError] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [links, setLinks] = useState<{ url: string; label: string }[]>([]);
+  const [pendingLinkUrl, setPendingLinkUrl] = useState('');
+  const [pendingLinkLabel, setPendingLinkLabel] = useState('');
+  const [linkError, setLinkError] = useState('');
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
@@ -453,6 +460,62 @@ export function Contact() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  function isValidUrl(url: string): boolean {
+    try {
+      const u = new URL(url);
+      return u.protocol === 'http:' || u.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
+  function detectPlatform(url: string): string | null {
+    try {
+      const host = new URL(url).hostname;
+      if (host.includes('drive.google.com')) return 'Google Drive';
+      if (host.includes('figma.com')) return 'Figma';
+      if (host.includes('dropbox.com')) return 'Dropbox';
+      if (host.includes('facebook.com') || host.includes('fb.com')) return 'Facebook';
+      if (host.includes('airbnb.com')) return 'Airbnb';
+      if (host.includes('booking.com')) return 'Booking.com';
+      if (host.includes('docs.google.com') || host.includes('notion')) return 'Document';
+      if (host.includes('google')) return 'Google';
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  function platformBadge(url: string): { icon: string; label: string } {
+    const platform = detectPlatform(url);
+    switch (platform) {
+      case 'Google Drive': return { icon: '📁', label: 'Google Drive' };
+      case 'Figma': return { icon: '🎨', label: 'Figma' };
+      case 'Dropbox': return { icon: '📦', label: 'Dropbox' };
+      case 'Facebook': return { icon: '👍', label: 'Facebook' };
+      case 'Airbnb': return { icon: '🏠', label: 'Airbnb' };
+      case 'Booking.com': return { icon: '🏨', label: 'Booking.com' };
+      case 'Document': return { icon: '📄', label: 'Document' };
+      case 'Google': return { icon: '🔗', label: 'Google' };
+      default: return { icon: '🌐', label: 'Website' };
+    }
+  }
+
+  const addLink = () => {
+    const url = pendingLinkUrl.trim();
+    if (!url) { setLinkError('Please enter a URL.'); return; }
+    if (!isValidUrl(url)) { setLinkError('Please enter a valid URL (starting with http:// or https://).'); return; }
+    if (links.length >= 10) { setLinkError('Maximum of 10 links allowed.'); return; }
+    setLinkError('');
+    setLinks((prev) => [...prev, { url, label: pendingLinkLabel.trim() }]);
+    setPendingLinkUrl('');
+    setPendingLinkLabel('');
+  };
+
+  const removeLink = (index: number) => {
+    setLinks((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = useCallback(async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -516,6 +579,19 @@ export function Contact() {
           const result = await uploadAttachment(consultationId, file);
           if (!result) throw new Error(`Failed to upload ${file.name}`);
         }
+      }
+
+      if (links.length > 0 && consultationId) {
+        let linkCount = 0;
+        for (const link of links) {
+          const result = await createConsultationLink(consultationId, link.url, link.label);
+          if (result) linkCount++;
+        }
+        await supabase.from('activity_logs').insert({
+          action: `Added ${linkCount} resource link(s) for ${form.property.trim()}.`,
+          entity_type: 'consultation',
+          entity_id: consultationId,
+        } as never);
       }
 
       await supabase.from('leads').insert({
@@ -600,6 +676,10 @@ export function Contact() {
     setForm({ name: '', property: '', email: '', phone: '', description: '' });
     setErrors({});
     setFiles([]);
+    setLinks([]);
+    setPendingLinkUrl('');
+    setPendingLinkLabel('');
+    setLinkError('');
     setTurnstileToken(null);
     setTurnstileResetKey((k) => k + 1);
     setSubmitted(false);
@@ -949,6 +1029,66 @@ export function Contact() {
                           </label>
                         )}
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-display-xl text-[10px] sm:text-xs font-semibold text-on-surface-variant mb-1.5 sm:mb-2 uppercase tracking-wider">
+                        Resources &amp; Links
+                      </label>
+                      <p className="text-[10px] sm:text-xs text-on-surface-variant/60 mb-2">
+                        Share Google Drive folders, Figma designs, existing websites, or any resources that help explain your project.
+                      </p>
+
+                      {links.map((link, index) => {
+                        const badge = platformBadge(link.url);
+                        return (
+                          <div key={index} className="flex items-center gap-2 bg-surface-container rounded-lg px-3 py-2 mb-1.5 text-xs">
+                            <span className="shrink-0">{badge.icon}</span>
+                            <span className="text-[10px] font-medium text-on-surface-variant uppercase shrink-0">{badge.label}</span>
+                            {link.label && <span className="text-on-surface truncate max-w-[100px] sm:max-w-[180px]">{link.label}</span>}
+                            <span className="text-on-surface-variant/60 truncate flex-1 hidden sm:inline">{link.url}</span>
+                            <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 transition-colors shrink-0" aria-label={`Open ${link.url}`}>
+                              <ExternalLink size={12} />
+                            </a>
+                            <button type="button" onClick={() => removeLink(index)} className="text-on-surface-variant hover:text-error transition-colors shrink-0" aria-label={`Remove link ${index + 1}`}>
+                              <X size={12} />
+                            </button>
+                          </div>
+                        );
+                      })}
+
+                      {links.length < 10 && (
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <div className="flex-1 flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="Label (optional)"
+                              value={pendingLinkLabel}
+                              onChange={(e) => setPendingLinkLabel(e.target.value)}
+                              className="flex-1 bg-surface-container rounded-lg px-2.5 py-1.5 text-xs text-on-surface placeholder:text-on-surface-variant/40 outline-none focus:ring-1 focus:ring-primary/40 transition-shadow w-[100px] sm:w-auto"
+                              aria-label="Link label"
+                            />
+                            <input
+                              type="text"
+                              placeholder="https://myresort.com"
+                              value={pendingLinkUrl}
+                              onChange={(e) => { setPendingLinkUrl(e.target.value); setLinkError(''); }}
+                              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLink(); } }}
+                              className="flex-1 bg-surface-container rounded-lg px-2.5 py-1.5 text-xs text-on-surface placeholder:text-on-surface-variant/40 outline-none focus:ring-1 focus:ring-primary/40 transition-shadow"
+                              aria-label="Link URL"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={addLink}
+                            className="flex items-center justify-center gap-1 bg-surface-container rounded-lg px-3 py-1.5 text-xs text-primary hover:bg-surface-container-highest transition-colors shrink-0"
+                          >
+                            <Link2 size={12} />
+                            Add Link
+                          </button>
+                        </div>
+                      )}
+                      {linkError && <p className="text-[10px] text-error mt-1">{linkError}</p>}
                     </div>
 
                     {useTurnstile && (
