@@ -571,8 +571,9 @@ export function Contact() {
         .single();
 
       if (consultResult.error) throw consultResult.error;
-      const newConsultation = consultResult.data as { id: string } | null;
+      const newConsultation = consultResult.data as { id: string; conversation_token: string } | null;
       const consultationId = newConsultation?.id ?? '';
+      const conversationToken = newConsultation?.conversation_token ?? '';
 
       if (files.length > 0 && consultationId) {
         for (const file of files) {
@@ -614,6 +615,7 @@ export function Contact() {
       } as never);
 
       try {
+        const conversationUrl = conversationToken ? `${window.location.origin}/messages/${conversationToken}` : '';
         const confirmHtml = fillTemplate(
           `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#333">
 <h2 style="color:#166534;margin-bottom:16px">Consultation Confirmed</h2>
@@ -625,6 +627,10 @@ export function Contact() {
 <tr><td style="padding:8px 12px;background:#f3f4f6;font-weight:600">Time</td><td style="padding:8px 12px">{{consultation_time}}</td></tr>
 </table>
 <p>I will contact you shortly to confirm.</p>
+${conversationUrl ? `<p style="margin-top:20px;padding-top:20px;border-top:1px solid #e5e7eb">
+<a href="${conversationUrl}" style="display:inline-block;background:#166534;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Continue the Conversation</a>
+</p>
+<p style="font-size:13px;color:#6b7280">Or copy this link:<br><span style="color:#166534">${conversationUrl}</span></p>` : ''}
 <p style="margin-top:16px;color:#6b7280;font-size:14px">— Rhen</p>
 </div>`,
           {

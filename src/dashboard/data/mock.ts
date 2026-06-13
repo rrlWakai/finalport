@@ -11,6 +11,7 @@ export const mockConsultations: Consultation[] = [
     consultation_time: '10:00 AM',
     status: 'confirmed',
     notes: 'Interested in building a complete direct-booking website with payment integration.',
+    conversation_token: 'a1b2c3d4-e5f6-4a9a-81c1-000000000001',
     created_at: '2026-06-10T08:00:00Z',
   },
   {
@@ -23,6 +24,7 @@ export const mockConsultations: Consultation[] = [
     consultation_time: '11:30 AM',
     status: 'pending',
     notes: 'Small boutique resort looking to reduce OTA commissions.',
+    conversation_token: 'a1b2c3d4-e5f6-4a9a-81c1-000000000002',
     created_at: '2026-06-09T10:00:00Z',
   },
   {
@@ -35,6 +37,7 @@ export const mockConsultations: Consultation[] = [
     consultation_time: '2:00 PM',
     status: 'confirmed',
     notes: 'Follow-up on proposal sent last week. Ready to move forward.',
+    conversation_token: 'a1b2c3d4-e5f6-4a9a-81c1-000000000003',
     created_at: '2026-06-08T14:00:00Z',
   },
   {
@@ -47,6 +50,7 @@ export const mockConsultations: Consultation[] = [
     consultation_time: '4:00 PM',
     status: 'confirmed',
     notes: 'Project presentation for full booking system with multi-property support.',
+    conversation_token: 'a1b2c3d4-e5f6-4a9a-81c1-000000000004',
     created_at: '2026-06-07T09:00:00Z',
   },
   {
@@ -59,6 +63,7 @@ export const mockConsultations: Consultation[] = [
     consultation_time: '9:00 AM',
     status: 'pending',
     notes: 'New inquiry from referral. Wants to discuss online booking options.',
+    conversation_token: 'a1b2c3d4-e5f6-4a9a-81c1-000000000005',
     created_at: '2026-06-11T11:00:00Z',
   },
   {
@@ -71,6 +76,7 @@ export const mockConsultations: Consultation[] = [
     consultation_time: '1:00 PM',
     status: 'confirmed',
     notes: 'Second consultation - reviewing proposed system architecture.',
+    conversation_token: 'a1b2c3d4-e5f6-4a9a-81c1-000000000006',
     created_at: '2026-06-10T16:00:00Z',
   },
   {
@@ -83,6 +89,7 @@ export const mockConsultations: Consultation[] = [
     consultation_time: '10:00 AM',
     status: 'completed',
     notes: 'Completed discovery call. Needs proposal sent.',
+    conversation_token: 'a1b2c3d4-e5f6-4a9a-81c1-000000000007',
     created_at: '2026-06-05T08:00:00Z',
   },
   {
@@ -95,6 +102,7 @@ export const mockConsultations: Consultation[] = [
     consultation_time: '3:00 PM',
     status: 'cancelled',
     notes: 'Cancelled - decided to use off-the-shelf solution.',
+    conversation_token: 'a1b2c3d4-e5f6-4a9a-81c1-000000000008',
     created_at: '2026-06-01T10:00:00Z',
   },
 ];

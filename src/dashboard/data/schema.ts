@@ -8,6 +8,17 @@ export interface Consultation {
   consultation_time: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
   notes: string;
+  conversation_token: string;
+  created_at: string;
+}
+
+export interface ConversationMessage {
+  id: string;
+  consultation_id: string;
+  sender_type: 'client' | 'admin';
+  sender_name: string;
+  message: string;
+  read_at: string | null;
   created_at: string;
 }
 
@@ -104,6 +115,7 @@ export type Database = {
       email_templates: { Row: EmailTemplate };
       consultation_attachments: { Row: ConsultationAttachment };
       consultation_links: { Row: ConsultationLink };
+      conversation_messages: { Row: ConversationMessage };
     };
   };
 };

@@ -7,6 +7,7 @@ import { ProtectedRoute } from './dashboard/components/ProtectedRoute';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { Home } from './pages/Home';
+import { ConversationPortal } from './pages/ConversationPortal';
 import { Login } from './dashboard/pages/Login';
 import { DashboardLayout } from './dashboard/layout/DashboardLayout';
 import { Overview } from './dashboard/pages/Overview';
@@ -46,6 +47,7 @@ function App() {
     <AuthProvider>
       <ToastProvider>
         <Routes>
+          <Route path="/messages/:token" element={<ConversationPortal />} />
           <Route path="/admin/login" element={<Login />} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route index element={<Overview />} />
@@ -58,7 +60,7 @@ function App() {
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
-        {!isDashboard && location.pathname !== '/admin/login' && (
+        {!isDashboard && location.pathname !== '/admin/login' && !location.pathname.startsWith('/messages/') && (
           <>
             <Navbar />
             <Home />

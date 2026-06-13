@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { Consultation, Lead, Message, Availability, ActivityLog, EmailTemplate, BlockedDate, ConsultationAttachment, ConsultationLink } from '../data/schema';
+import type { Consultation, Lead, Message, Availability, ActivityLog, EmailTemplate, BlockedDate, ConsultationAttachment, ConsultationLink, ConversationMessage } from '../data/schema';
 
 function isConfigured() {
   return !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
@@ -271,6 +271,48 @@ export async function createConsultationLink(
 export async function deleteConsultationLink(id: string) {
   if (!isConfigured()) return;
   await supabase.from('consultation_links').delete().eq('id', id);
+}
+
+// ─── Conversation Messages ──────────────────────────────────────────
+
+export async function getConsultationByToken(token: string): Promise<Consultation | null> {
+  if (!isConfigured()) return null;
+  const { data } = await supabase.from('consultations').select('*')
+    .eq('conversation_token', token)
+    .single();
+  return (data ?? null) as unknown as Consultation | null;
+}
+
+export async function getConversationMessages(consultationId: string): Promise<ConversationMessage[]> {
+  if (!isConfigured()) return [];
+  const { data } = await supabase.from('conversation_messages').select('*')
+    .eq('consultation_id', consultationId)
+    .order('created_at', { ascending: true });
+  return (data ?? []) as unknown as ConversationMessage[];
+}
+
+export async function sendConversationMessage(
+  consultationId: string,
+  senderType: 'client' | 'admin',
+  message: string,
+  senderName?: string,
+): Promise<ConversationMessage | null> {
+  if (!isConfigured()) return null;
+  const sanitized = message.slice(0, 2000);
+  const { data } = await supabase.from('conversation_messages').insert({
+    consultation_id: consultationId,
+    sender_type: senderType,
+    sender_name: senderName ?? '',
+    message: sanitized,
+  } as never).select().single();
+  return (data ?? null) as unknown as ConversationMessage | null;
+}
+
+export async function markConversationAsRead(consultationId: string) {
+  if (!isConfigured()) return;
+  await supabase.from('conversation_messages').update({
+    read_at: new Date().toISOString(),
+  } as never).eq('consultation_id', consultationId).is('read_at', null);
 }
 
 // ─── Rate Limiting ───────────────────────────────────────────────────
