@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Lenis from 'lenis';
 import { ToastProvider } from './lib/toast';
 import { AuthProvider } from './dashboard/lib/auth';
 import { ProtectedRoute } from './dashboard/components/ProtectedRoute';
+import { LoadingScreen } from './components/LoadingScreen';
+import { useLoading } from './hooks/useLoading';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { Home } from './pages/Home';
@@ -20,6 +22,8 @@ import { Settings } from './dashboard/pages/Settings';
 function App() {
   const location = useLocation();
   const isDashboard = location.pathname.startsWith('/dashboard');
+  const isLoading = useLoading();
+  const [loadingDone, setLoadingDone] = useState(false);
 
   useEffect(() => {
     if (isDashboard) return;
@@ -44,23 +48,29 @@ function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <Routes>
-          <Route path="/admin/login" element={<Login />} />
-          <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-            <Route index element={<Overview />} />
-            <Route path="consultations" element={<Appointments />} />
-            <Route path="calendar" element={<CalendarPage />} />
-            <Route path="leads" element={<Leads />} />
-            <Route path="availability" element={<AvailabilityPage />} />
-            <Route path="email-templates" element={<EmailTemplates />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
-        </Routes>
-        {!isDashboard && location.pathname !== '/admin/login' && (
+        {isLoading && !loadingDone && !isDashboard ? (
+          <LoadingScreen onLoaded={() => setLoadingDone(true)} />
+        ) : (
           <>
-            <Navbar />
-            <Home />
-            <Footer />
+            <Routes>
+              <Route path="/admin/login" element={<Login />} />
+              <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                <Route index element={<Overview />} />
+                <Route path="consultations" element={<Appointments />} />
+                <Route path="calendar" element={<CalendarPage />} />
+                <Route path="leads" element={<Leads />} />
+                <Route path="availability" element={<AvailabilityPage />} />
+                <Route path="email-templates" element={<EmailTemplates />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
+            </Routes>
+            {!isDashboard && location.pathname !== '/admin/login' && (
+              <>
+                <Navbar />
+                <Home />
+                <Footer />
+              </>
+            )}
           </>
         )}
       </ToastProvider>
