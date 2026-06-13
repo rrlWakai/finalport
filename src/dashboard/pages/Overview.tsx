@@ -29,12 +29,12 @@ import {
 import { Badge } from '../components/ui/badge';
 import { ErrorState } from '../components/ErrorState';
 import {
-  getConsultations,
+  getAppointments,
   getLeads,
   getActivityLogs,
   subscribeToTableChanges,
 } from '../data/service';
-import { CONSULTATION_STATUS_LABELS, STAGE_LABELS, type Consultation, type Lead, type ActivityLog } from '../data/schema';
+import { APPOINTMENT_STATUS_LABELS, STAGE_LABELS, type Appointment, type Lead, type ActivityLog } from '../data/schema';
 
 function Greeting() {
   const hour = new Date().getHours();
@@ -48,22 +48,17 @@ function Greeting() {
         <span className="inline-block origin-hand animate-wave">👋</span>
       </h1>
       <p className="font-body-md text-sm text-on-surface-variant mt-1">
-        Here&apos;s what&apos;s happening with your consultations.
+        Here&apos;s what&apos;s happening with your appointments.
       </p>
     </div>
   );
 }
 
-function TodaySchedule({ consultations, loading }: { consultations: Consultation[]; loading: boolean }) {
+function TodaySchedule({ appointments, loading }: { appointments: Appointment[]; loading: boolean }) {
   const today = new Date().toISOString().split('T')[0];
-  const todayConsults = consultations.filter(
-    (c) => c.consultation_date === today && c.status !== 'cancelled',
+  const todayAppts = appointments.filter(
+    (a) => a.preferred_date === today && a.status !== 'cancelled',
   );
-  todayConsults.sort((a, b) => {
-    if (a.consultation_time < b.consultation_time) return -1;
-    if (a.consultation_time > b.consultation_time) return 1;
-    return 0;
-  });
 
   return (
     <section className="mb-10">
@@ -77,25 +72,25 @@ function TodaySchedule({ consultations, loading }: { consultations: Consultation
           <Loader2 size={16} className="animate-spin mr-2" />
           Loading schedule...
         </div>
-      ) : todayConsults.length === 0 ? (
+      ) : todayAppts.length === 0 ? (
         <div className="py-8 text-center text-sm text-on-surface-variant/60 rounded-xl border border-dashed border-outline/40">
-          No consultations scheduled for today.
+          No appointments scheduled for today.
         </div>
       ) : (
         <div className="relative">
           <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-outline/30" />
           <div className="space-y-0">
-            {todayConsults.map((consult) => (
-              <div key={consult.id} className="flex gap-4 py-3">
+            {todayAppts.map((appt) => (
+              <div key={appt.id} className="flex gap-4 py-3">
                 <div className="flex flex-col items-center shrink-0 w-14 pt-0.5">
                   <span className="font-body-md text-xs font-medium text-on-surface-variant">
-                    {consult.consultation_time}
+                    {appt.preferred_time || '—'}
                   </span>
                 </div>
                 <div className="relative pl-4 flex-1">
                   <div
                     className={`absolute left-0 top-2 w-2.5 h-2.5 rounded-full border-2 ${
-                      consult.status === 'confirmed'
+                      appt.status === 'approved'
                         ? 'bg-emerald-500 border-emerald-200'
                         : 'bg-amber-400 border-amber-200'
                     }`}
@@ -104,19 +99,19 @@ function TodaySchedule({ consultations, loading }: { consultations: Consultation
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="font-body-md text-sm font-medium text-on-surface">
-                          {consult.property_name}
+                          {appt.name}
                         </p>
                         <p className="font-body-md text-xs text-on-surface-variant mt-0.5">
-                          {consult.name}
+                          {appt.project_type}
                         </p>
                       </div>
                       <Badge
                         variant={
-                          consult.status === 'confirmed' ? 'success' : 'warning'
+                          appt.status === 'approved' ? 'success' : 'warning'
                         }
                         size="sm"
                       >
-                        {CONSULTATION_STATUS_LABELS[consult.status]}
+                        {APPOINTMENT_STATUS_LABELS[appt.status]}
                       </Badge>
                     </div>
                   </div>
@@ -337,7 +332,7 @@ function ActivityFeed({ logs, loading }: { logs: ActivityLog[]; loading: boolean
   );
 
   const getIcon = (action: string) => {
-    if (action.includes('booked') || action.includes('confirmed'))
+    if (action.includes('appointment') || action.includes('Appointment'))
       return <CalendarCheck size={14} className="text-emerald-500" />;
     if (action.includes('Proposal') || action.includes('proposal'))
       return <FileText size={14} className="text-violet-500" />;
@@ -395,7 +390,7 @@ function ActivityFeed({ logs, loading }: { logs: ActivityLog[]; loading: boolean
 }
 
 export function Overview() {
-  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -405,12 +400,12 @@ export function Overview() {
     setLoading(true);
     setError(null);
     try {
-      const [consults, leadData, activity] = await Promise.all([
-        getConsultations(),
+      const [appts, leadData, activity] = await Promise.all([
+        getAppointments(),
         getLeads(),
         getActivityLogs(),
       ]);
-      setConsultations(consults);
+      setAppointments(appts);
       setLeads(leadData);
       setLogs(activity);
     } catch (err) {
@@ -425,18 +420,18 @@ export function Overview() {
   }, []);
 
   useEffect(() => {
-    const unsub1 = subscribeToTableChanges('consultations', {
+    const unsub1 = subscribeToTableChanges('appointments', {
       onInsert: (p) => {
-        const record = p.new as unknown as Consultation;
-        if (record) setConsultations((prev) => [...prev, record]);
+        const record = p.new as unknown as Appointment;
+        if (record) setAppointments((prev) => [...prev, record]);
       },
       onUpdate: (p) => {
-        const record = p.new as unknown as Consultation;
-        if (record?.id) setConsultations((prev) => prev.map((c) => c.id === record.id ? record : c));
+        const record = p.new as unknown as Appointment;
+        if (record?.id) setAppointments((prev) => prev.map((a) => a.id === record.id ? record : a));
       },
       onDelete: (p) => {
-        const old = p.old as unknown as Consultation;
-        if (old?.id) setConsultations((prev) => prev.filter((c) => c.id !== old.id));
+        const old = p.old as unknown as Appointment;
+        if (old?.id) setAppointments((prev) => prev.filter((a) => a.id !== old.id));
       },
     });
     const unsub2 = subscribeToTableChanges('leads', {
@@ -474,7 +469,7 @@ export function Overview() {
   return (
     <div>
       <Greeting />
-      <TodaySchedule consultations={consultations} loading={loading} />
+      <TodaySchedule appointments={appointments} loading={loading} />
       <PipelineOverview leads={leads} loading={loading} />
       <RecentInquiries leads={leads} loading={loading} />
       <ActivityFeed logs={logs} loading={loading} />

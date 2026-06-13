@@ -4,7 +4,6 @@ import {
   CalendarCheck,
   Calendar,
   Users,
-  MessageSquare,
   Clock,
   FileText,
   Settings,
@@ -16,10 +15,9 @@ import { useAuth } from '../lib/auth';
 
 const NAV_ITEMS = [
   { label: 'Overview', icon: LayoutDashboard, href: '/dashboard' },
-  { label: 'Consultations', icon: CalendarCheck, href: '/dashboard/consultations' },
+  { label: 'Appointments', icon: CalendarCheck, href: '/dashboard/consultations' },
   { label: 'Calendar', icon: Calendar, href: '/dashboard/calendar' },
   { label: 'Leads & Pipeline', icon: Users, href: '/dashboard/leads' },
-  { label: 'Messages', icon: MessageSquare, href: '/dashboard/messages' },
   { label: 'Availability', icon: Clock, href: '/dashboard/availability' },
   { label: 'Email Templates', icon: FileText, href: '/dashboard/email-templates' },
   { label: 'Settings', icon: Settings, href: '/dashboard/settings' },

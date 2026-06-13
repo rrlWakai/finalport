@@ -15,14 +15,14 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { ErrorState } from '../components/ErrorState';
 import {
-  getConsultations,
+  getAppointments,
   getBlockedDates,
   subscribeToTableChanges,
 } from '../data/service';
-import { CONSULTATION_STATUS_LABELS, type Consultation, type BlockedDate } from '../data/schema';
+import { APPOINTMENT_STATUS_LABELS, type Appointment, type BlockedDate } from '../data/schema';
 
 export function CalendarPage() {
-  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,11 +33,11 @@ export function CalendarPage() {
     setLoading(true);
     setError(null);
     try {
-      const [consults, blocked] = await Promise.all([
-        getConsultations(),
+      const [appts, blocked] = await Promise.all([
+        getAppointments(),
         getBlockedDates(),
       ]);
-      setConsultations(consults);
+      setAppointments(appts);
       setBlockedDates(blocked);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load calendar data');
@@ -51,21 +51,21 @@ export function CalendarPage() {
   }, []);
 
   useEffect(() => {
-    const unsub1 = subscribeToTableChanges('consultations', {
+    const unsub1 = subscribeToTableChanges('appointments', {
       onInsert: (payload) => {
-        const record = (payload as Record<string, unknown>).new as unknown as Consultation;
-        if (record) setConsultations((prev) => {
-          const exists = prev.some((c) => c.id === record.id);
+        const record = (payload as Record<string, unknown>).new as unknown as Appointment;
+        if (record) setAppointments((prev) => {
+          const exists = prev.some((a) => a.id === record.id);
           return exists ? prev : [...prev, record];
         });
       },
       onUpdate: (payload) => {
-        const record = (payload as Record<string, unknown>).new as unknown as Consultation;
-        if (record?.id) setConsultations((prev) => prev.map((c) => c.id === record.id ? record : c));
+        const record = (payload as Record<string, unknown>).new as unknown as Appointment;
+        if (record?.id) setAppointments((prev) => prev.map((a) => a.id === record.id ? record : a));
       },
       onDelete: (payload) => {
-        const old = (payload as Record<string, unknown>).old as unknown as Consultation;
-        if (old?.id) setConsultations((prev) => prev.filter((c) => c.id !== old.id));
+        const old = (payload as Record<string, unknown>).old as unknown as Appointment;
+        if (old?.id) setAppointments((prev) => prev.filter((a) => a.id !== old.id));
       },
     });
     const unsub2 = subscribeToTableChanges('blocked_dates', {
@@ -89,11 +89,11 @@ export function CalendarPage() {
   const calEnd = endOfWeek(monthEnd);
   const days = eachDayOfInterval({ start: calStart, end: calEnd });
 
-  const consultsOnDate = useMemo(() => {
+  const apptsOnDate = useMemo(() => {
     if (!selectedDate) return [];
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
-    return consultations.filter((c) => c.consultation_date === dateStr);
-  }, [selectedDate, consultations]);
+    return appointments.filter((a) => a.preferred_date === dateStr);
+  }, [selectedDate, appointments]);
 
   const blockedOnDate = useMemo(() => {
     if (!selectedDate) return null;
@@ -101,10 +101,10 @@ export function CalendarPage() {
     return blockedDates.find((b) => b.date === dateStr) ?? null;
   }, [selectedDate, blockedDates]);
 
-  const getConsultCount = (day: Date) => {
+  const getApptCount = (day: Date) => {
     const dateStr = format(day, 'yyyy-MM-dd');
-    return consultations.filter(
-      (c) => c.consultation_date === dateStr && c.status !== 'cancelled',
+    return appointments.filter(
+      (a) => a.preferred_date === dateStr && a.status !== 'cancelled',
     ).length;
   };
 
@@ -189,7 +189,7 @@ export function CalendarPage() {
                 const inMonth = isSameMonth(day, currentDate);
                 const selected = selectedDate && isSameDay(day, selectedDate);
                 const today = isToday(day);
-                const count = getConsultCount(day);
+                const count = getApptCount(day);
                 const blocked = isBlocked(day);
 
                 return (
@@ -238,32 +238,32 @@ export function CalendarPage() {
             )}
 
             <div className="space-y-2">
-              {consultsOnDate.length === 0 && selectedDate && !blockedOnDate ? (
+              {apptsOnDate.length === 0 && selectedDate && !blockedOnDate ? (
                 <p className="text-sm text-on-surface-variant/60 py-4 text-center">
-                  No consultations on this day.
+                  No appointments on this day.
                 </p>
               ) : (
-                consultsOnDate.map((consult) => (
+                apptsOnDate.map((appt) => (
                   <div
-                    key={consult.id}
+                    key={appt.id}
                     className="rounded-xl border border-outline/30 bg-surface p-3 hover:border-outline/60 transition-colors"
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-body-md text-xs font-medium text-primary">
-                        {consult.consultation_time}
+                        {appt.preferred_time || '—'}
                       </span>
                       <Badge
-                        variant={consult.status === 'confirmed' ? 'success' : 'warning'}
+                        variant={appt.status === 'approved' ? 'success' : 'warning'}
                         size="sm"
                       >
-                        {CONSULTATION_STATUS_LABELS[consult.status]}
+                        {APPOINTMENT_STATUS_LABELS[appt.status]}
                       </Badge>
                     </div>
                     <p className="font-body-md text-sm font-medium text-on-surface">
-                      {consult.property_name}
+                      {appt.name}
                     </p>
                     <p className="font-body-md text-xs text-on-surface-variant mt-0.5">
-                      {consult.name}
+                      {appt.project_type}
                     </p>
                   </div>
                 ))

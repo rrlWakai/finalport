@@ -7,14 +7,12 @@ import { ProtectedRoute } from './dashboard/components/ProtectedRoute';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { Home } from './pages/Home';
-import { ConversationPortal } from './pages/ConversationPortal';
 import { Login } from './dashboard/pages/Login';
 import { DashboardLayout } from './dashboard/layout/DashboardLayout';
 import { Overview } from './dashboard/pages/Overview';
-import { Consultations } from './dashboard/pages/Consultations';
+import { Appointments } from './dashboard/pages/Consultations';
 import { CalendarPage } from './dashboard/pages/Calendar';
 import { Leads } from './dashboard/pages/Leads';
-import { Messages } from './dashboard/pages/Messages';
 import { AvailabilityPage } from './dashboard/pages/Availability';
 import { EmailTemplates } from './dashboard/pages/EmailTemplates';
 import { Settings } from './dashboard/pages/Settings';
@@ -47,20 +45,18 @@ function App() {
     <AuthProvider>
       <ToastProvider>
         <Routes>
-          <Route path="/messages/:token" element={<ConversationPortal />} />
           <Route path="/admin/login" element={<Login />} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route index element={<Overview />} />
-            <Route path="consultations" element={<Consultations />} />
+            <Route path="consultations" element={<Appointments />} />
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="leads" element={<Leads />} />
-            <Route path="messages" element={<Messages />} />
             <Route path="availability" element={<AvailabilityPage />} />
             <Route path="email-templates" element={<EmailTemplates />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
-        {!isDashboard && location.pathname !== '/admin/login' && !location.pathname.startsWith('/messages/') && (
+        {!isDashboard && location.pathname !== '/admin/login' && (
           <>
             <Navbar />
             <Home />

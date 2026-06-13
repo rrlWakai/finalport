@@ -60,7 +60,7 @@ export function Hero() {
             >
               <span className="w-2 h-2 rounded-full bg-primary" />
               <span className="font-label-caps text-label-caps text-primary uppercase">
-                Software Engineer — Booking Systems Specialist
+                Full-Stack Developer — Booking Systems Specialist
               </span>
             </motion.div>
 

@@ -1,25 +1,19 @@
-export interface Consultation {
+export interface Appointment {
   id: string;
   name: string;
-  property_name: string;
   email: string;
-  phone: string;
-  consultation_date: string;
-  consultation_time: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
-  notes: string;
-  conversation_token: string;
+  company: string | null;
+  project_type: string;
+  description: string;
+  budget_range: string | null;
+  preferred_date: string | null;
+  preferred_time: string | null;
+  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled';
+  meeting_link: string | null;
+  scheduled_at: string | null;
+  admin_notes: string | null;
   created_at: string;
-}
-
-export interface ConversationMessage {
-  id: string;
-  consultation_id: string;
-  sender_type: 'client' | 'admin';
-  sender_name: string;
-  message: string;
-  read_at: string | null;
-  created_at: string;
+  updated_at: string;
 }
 
 export interface Lead {
@@ -34,16 +28,6 @@ export interface Lead {
   source: string;
   stage: 'new_inquiry' | 'discovery_scheduled' | 'proposal_sent' | 'negotiation' | 'won' | 'lost';
   notes: string;
-  created_at: string;
-}
-
-export interface Message {
-  id: string;
-  sender_name: string;
-  email: string;
-  subject: string;
-  message: string;
-  status: 'unread' | 'read' | 'archived' | 'resolved';
   created_at: string;
 }
 
@@ -77,24 +61,6 @@ export interface EmailTemplate {
   created_at: string;
 }
 
-export interface ConsultationAttachment {
-  id: string;
-  consultation_id: string;
-  file_name: string;
-  file_path: string;
-  file_size: number;
-  mime_type: string;
-  created_at: string;
-}
-
-export interface ConsultationLink {
-  id: string;
-  consultation_id: string;
-  label: string;
-  url: string;
-  created_at: string;
-}
-
 export interface DashboardUser {
   id: string;
   name: string;
@@ -106,18 +72,30 @@ export interface DashboardUser {
 export type Database = {
   public: {
     Tables: {
-      consultations: { Row: Consultation };
+      appointments: { Row: Appointment };
       leads: { Row: Lead };
-      messages: { Row: Message };
       availability: { Row: Availability };
       activity_logs: { Row: ActivityLog };
       blocked_dates: { Row: BlockedDate };
       email_templates: { Row: EmailTemplate };
-      consultation_attachments: { Row: ConsultationAttachment };
-      consultation_links: { Row: ConsultationLink };
-      conversation_messages: { Row: ConversationMessage };
     };
   };
+};
+
+export const APPOINTMENT_STATUS_LABELS: Record<Appointment['status'], string> = {
+  pending: 'Pending',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
+
+export const APPOINTMENT_STATUS_COLORS: Record<Appointment['status'], string> = {
+  pending: 'bg-amber-100 text-amber-800',
+  approved: 'bg-emerald-100 text-emerald-800',
+  rejected: 'bg-red-100 text-red-800',
+  completed: 'bg-blue-100 text-blue-800',
+  cancelled: 'bg-neutral-100 text-neutral-500',
 };
 
 export const STAGE_LABELS: Record<Lead['stage'], string> = {
@@ -136,29 +114,6 @@ export const STAGE_COLORS: Record<Lead['stage'], string> = {
   negotiation: 'bg-orange-100 text-orange-800',
   won: 'bg-emerald-100 text-emerald-800',
   lost: 'bg-neutral-100 text-neutral-500',
-};
-
-export const CONSULTATION_STATUS_LABELS: Record<Consultation['status'], string> = {
-  pending: 'Pending',
-  confirmed: 'Confirmed',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
-  no_show: 'No Show',
-};
-
-export const CONSULTATION_STATUS_COLORS: Record<Consultation['status'], string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  confirmed: 'bg-emerald-100 text-emerald-800',
-  completed: 'bg-blue-100 text-blue-800',
-  cancelled: 'bg-neutral-100 text-neutral-500',
-  no_show: 'bg-red-100 text-red-800',
-};
-
-export const MESSAGE_STATUS_LABELS: Record<Message['status'], string> = {
-  unread: 'Unread',
-  read: 'Read',
-  archived: 'Archived',
-  resolved: 'Resolved',
 };
 
 export const DAYS_OF_WEEK = [
