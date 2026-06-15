@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { Appointment, Lead, Availability, ActivityLog, EmailTemplate, BlockedDate } from '../data/schema';
+import type { Appointment, Consultation, Lead, Availability, ActivityLog, EmailTemplate, BlockedDate } from '../data/schema';
 
 function isConfigured() {
   return !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
@@ -42,6 +42,84 @@ export async function updateAppointment(id: string, updates: Partial<Appointment
 export async function deleteAppointment(id: string) {
   if (!isConfigured()) return;
   await supabase.from('appointments').delete().eq('id', id);
+}
+
+// ─── Consultations (Booking Scheduler) ───────────────────────────────
+
+export async function getConsultations(): Promise<Consultation[]> {
+  if (!isConfigured()) return [];
+  const { data } = await supabase.from('consultations').select('*')
+    .order('consultation_date', { ascending: true });
+  return (data ?? []) as unknown as Consultation[];
+}
+
+export async function createConsultation(consult: Omit<Consultation, 'id' | 'created_at'>) {
+  if (!isConfigured()) return null;
+  const { data } = await supabase.from('consultations').insert(consult as never).select().single();
+  return (data ?? null) as unknown as Consultation | null;
+}
+
+export async function checkSlotAvailability(date: string, time: string): Promise<boolean> {
+  if (!isConfigured()) return true;
+  const { count } = await supabase
+    .from('consultations')
+    .select('*', { count: 'exact', head: true })
+    .eq('consultation_date', date)
+    .eq('consultation_time', time)
+    .in('status', ['pending', 'confirmed']);
+  return (count ?? 0) === 0;
+}
+
+export async function getAttachments(consultationId: string): Promise<{ id: string; consultation_id: string; file_name: string; file_path: string; file_size: number; mime_type: string; created_at: string }[]> {
+  if (!isConfigured()) return [];
+  const { data } = await supabase.from('consultation_attachments').select('*')
+    .eq('consultation_id', consultationId)
+    .order('created_at', { ascending: true });
+  return (data ?? []) as unknown as { id: string; consultation_id: string; file_name: string; file_path: string; file_size: number; mime_type: string; created_at: string }[];
+}
+
+export async function uploadAttachment(
+  consultationId: string,
+  file: File,
+): Promise<{ id: string; file_name: string; file_path: string } | null> {
+  if (!isConfigured()) return null;
+  const ext = file.name.split('.').pop() ?? 'bin';
+  const filePath = `consultations/${consultationId}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('consultation-attachments')
+    .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+  if (uploadError) throw uploadError;
+
+  const { data: meta, error: metaError } = await supabase
+    .from('consultation_attachments')
+    .insert({
+      consultation_id: consultationId,
+      file_name: file.name,
+      file_path: filePath,
+      file_size: file.size,
+      mime_type: file.type,
+    } as never)
+    .select()
+    .single();
+
+  if (metaError) throw metaError;
+  return meta ? { id: (meta as Record<string, unknown>).id as string, file_name: file.name, file_path: filePath } : null;
+}
+
+export async function createConsultationLink(
+  consultationId: string,
+  url: string,
+  label?: string,
+): Promise<{ id: string; url: string; label: string } | null> {
+  if (!isConfigured()) return null;
+  const { data } = await supabase.from('consultation_links').insert({
+    consultation_id: consultationId,
+    url,
+    label: label ?? '',
+  } as never).select().single();
+  return data ? { id: (data as Record<string, unknown>).id as string, url, label: label ?? '' } : null;
 }
 
 // ─── Leads ───────────────────────────────────────────────────────────

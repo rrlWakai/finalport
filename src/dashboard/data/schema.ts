@@ -69,10 +69,25 @@ export interface DashboardUser {
   avatar_url: string;
 }
 
+export interface Consultation {
+  id: string;
+  name: string;
+  property_name: string;
+  email: string;
+  phone: string;
+  consultation_date: string;
+  consultation_time: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+  notes: string;
+  conversation_token: string;
+  created_at: string;
+}
+
 export type Database = {
   public: {
     Tables: {
       appointments: { Row: Appointment };
+      consultations: { Row: Consultation };
       leads: { Row: Lead };
       availability: { Row: Availability };
       activity_logs: { Row: ActivityLog };
