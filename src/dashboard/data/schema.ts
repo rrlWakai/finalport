@@ -1,17 +1,19 @@
-export interface Appointment {
+export interface Consultation {
   id: string;
   name: string;
+  property_name: string;
   email: string;
-  company: string | null;
+  phone: string;
+  consultation_date: string;
+  consultation_time: string;
   project_type: string;
-  description: string;
   budget_range: string | null;
-  preferred_date: string | null;
-  preferred_time: string | null;
-  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'approved' | 'rejected' | 'completed' | 'cancelled' | 'no_show';
+  notes: string;
   meeting_link: string | null;
   scheduled_at: string | null;
   admin_notes: string | null;
+  conversation_token: string;
   created_at: string;
   updated_at: string;
 }
@@ -69,24 +71,9 @@ export interface DashboardUser {
   avatar_url: string;
 }
 
-export interface Consultation {
-  id: string;
-  name: string;
-  property_name: string;
-  email: string;
-  phone: string;
-  consultation_date: string;
-  consultation_time: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
-  notes: string;
-  conversation_token: string;
-  created_at: string;
-}
-
 export type Database = {
   public: {
     Tables: {
-      appointments: { Row: Appointment };
       consultations: { Row: Consultation };
       leads: { Row: Lead };
       availability: { Row: Availability };
@@ -97,20 +84,24 @@ export type Database = {
   };
 };
 
-export const APPOINTMENT_STATUS_LABELS: Record<Appointment['status'], string> = {
+export const CONSULTATION_STATUS_LABELS: Record<Consultation['status'], string> = {
   pending: 'Pending',
+  confirmed: 'Confirmed',
   approved: 'Approved',
   rejected: 'Rejected',
   completed: 'Completed',
   cancelled: 'Cancelled',
+  no_show: 'No Show',
 };
 
-export const APPOINTMENT_STATUS_COLORS: Record<Appointment['status'], string> = {
+export const CONSULTATION_STATUS_COLORS: Record<Consultation['status'], string> = {
   pending: 'bg-amber-100 text-amber-800',
+  confirmed: 'bg-emerald-100 text-emerald-800',
   approved: 'bg-emerald-100 text-emerald-800',
   rejected: 'bg-red-100 text-red-800',
   completed: 'bg-blue-100 text-blue-800',
   cancelled: 'bg-neutral-100 text-neutral-500',
+  no_show: 'bg-neutral-100 text-neutral-500',
 };
 
 export const STAGE_LABELS: Record<Lead['stage'], string> = {

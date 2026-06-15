@@ -29,12 +29,12 @@ import {
 import { Badge } from '../components/ui/badge';
 import { ErrorState } from '../components/ErrorState';
 import {
-  getAppointments,
+  getConsultations,
   getLeads,
   getActivityLogs,
   subscribeToTableChanges,
 } from '../data/service';
-import { APPOINTMENT_STATUS_LABELS, STAGE_LABELS, type Appointment, type Lead, type ActivityLog } from '../data/schema';
+import { CONSULTATION_STATUS_LABELS, STAGE_LABELS, type Consultation, type Lead, type ActivityLog } from '../data/schema';
 
 function Greeting() {
   const hour = new Date().getHours();
@@ -54,10 +54,10 @@ function Greeting() {
   );
 }
 
-function TodaySchedule({ appointments, loading }: { appointments: Appointment[]; loading: boolean }) {
+function TodaySchedule({ consultations, loading }: { consultations: Consultation[]; loading: boolean }) {
   const today = new Date().toISOString().split('T')[0];
-  const todayAppts = appointments.filter(
-    (a) => a.preferred_date === today && a.status !== 'cancelled',
+  const todayAppts = consultations.filter(
+    (a) => a.consultation_date === today && a.status !== 'cancelled',
   );
 
   return (
@@ -84,7 +84,7 @@ function TodaySchedule({ appointments, loading }: { appointments: Appointment[];
               <div key={appt.id} className="flex gap-4 py-3">
                 <div className="flex flex-col items-center shrink-0 w-14 pt-0.5">
                   <span className="font-body-md text-xs font-medium text-on-surface-variant">
-                    {appt.preferred_time || '—'}
+                    {appt.consultation_time || '—'}
                   </span>
                 </div>
                 <div className="relative pl-4 flex-1">
@@ -111,7 +111,7 @@ function TodaySchedule({ appointments, loading }: { appointments: Appointment[];
                         }
                         size="sm"
                       >
-                        {APPOINTMENT_STATUS_LABELS[appt.status]}
+                        {CONSULTATION_STATUS_LABELS[appt.status]}
                       </Badge>
                     </div>
                   </div>
@@ -390,7 +390,7 @@ function ActivityFeed({ logs, loading }: { logs: ActivityLog[]; loading: boolean
 }
 
 export function Overview() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -401,11 +401,11 @@ export function Overview() {
     setError(null);
     try {
       const [appts, leadData, activity] = await Promise.all([
-        getAppointments(),
+        getConsultations(),
         getLeads(),
         getActivityLogs(),
       ]);
-      setAppointments(appts);
+      setConsultations(appts);
       setLeads(leadData);
       setLogs(activity);
     } catch (err) {
@@ -420,18 +420,18 @@ export function Overview() {
   }, []);
 
   useEffect(() => {
-    const unsub1 = subscribeToTableChanges('appointments', {
+    const unsub1 = subscribeToTableChanges('consultations', {
       onInsert: (p) => {
-        const record = p.new as unknown as Appointment;
-        if (record) setAppointments((prev) => [...prev, record]);
+        const record = p.new as unknown as Consultation;
+        if (record) setConsultations((prev) => [...prev, record]);
       },
       onUpdate: (p) => {
-        const record = p.new as unknown as Appointment;
-        if (record?.id) setAppointments((prev) => prev.map((a) => a.id === record.id ? record : a));
+        const record = p.new as unknown as Consultation;
+        if (record?.id) setConsultations((prev) => prev.map((a) => a.id === record.id ? record : a));
       },
       onDelete: (p) => {
-        const old = p.old as unknown as Appointment;
-        if (old?.id) setAppointments((prev) => prev.filter((a) => a.id !== old.id));
+        const old = p.old as unknown as Consultation;
+        if (old?.id) setConsultations((prev) => prev.filter((a) => a.id !== old.id));
       },
     });
     const unsub2 = subscribeToTableChanges('leads', {
@@ -469,7 +469,7 @@ export function Overview() {
   return (
     <div>
       <Greeting />
-      <TodaySchedule appointments={appointments} loading={loading} />
+      <TodaySchedule consultations={consultations} loading={loading} />
       <PipelineOverview leads={leads} loading={loading} />
       <RecentInquiries leads={leads} loading={loading} />
       <ActivityFeed logs={logs} loading={loading} />

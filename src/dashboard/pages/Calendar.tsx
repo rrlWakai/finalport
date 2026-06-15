@@ -15,14 +15,14 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { ErrorState } from '../components/ErrorState';
 import {
-  getAppointments,
+  getConsultations,
   getBlockedDates,
   subscribeToTableChanges,
 } from '../data/service';
-import { APPOINTMENT_STATUS_LABELS, type Appointment, type BlockedDate } from '../data/schema';
+import { CONSULTATION_STATUS_LABELS, type Consultation, type BlockedDate } from '../data/schema';
 
 export function CalendarPage() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,10 +34,10 @@ export function CalendarPage() {
     setError(null);
     try {
       const [appts, blocked] = await Promise.all([
-        getAppointments(),
+        getConsultations(),
         getBlockedDates(),
       ]);
-      setAppointments(appts);
+      setConsultations(appts);
       setBlockedDates(blocked);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load calendar data');
@@ -51,21 +51,21 @@ export function CalendarPage() {
   }, []);
 
   useEffect(() => {
-    const unsub1 = subscribeToTableChanges('appointments', {
+    const unsub1 = subscribeToTableChanges('consultations', {
       onInsert: (payload) => {
-        const record = (payload as Record<string, unknown>).new as unknown as Appointment;
-        if (record) setAppointments((prev) => {
+        const record = (payload as Record<string, unknown>).new as unknown as Consultation;
+        if (record) setConsultations((prev) => {
           const exists = prev.some((a) => a.id === record.id);
           return exists ? prev : [...prev, record];
         });
       },
       onUpdate: (payload) => {
-        const record = (payload as Record<string, unknown>).new as unknown as Appointment;
-        if (record?.id) setAppointments((prev) => prev.map((a) => a.id === record.id ? record : a));
+        const record = (payload as Record<string, unknown>).new as unknown as Consultation;
+        if (record?.id) setConsultations((prev) => prev.map((a) => a.id === record.id ? record : a));
       },
       onDelete: (payload) => {
-        const old = (payload as Record<string, unknown>).old as unknown as Appointment;
-        if (old?.id) setAppointments((prev) => prev.filter((a) => a.id !== old.id));
+        const old = (payload as Record<string, unknown>).old as unknown as Consultation;
+        if (old?.id) setConsultations((prev) => prev.filter((a) => a.id !== old.id));
       },
     });
     const unsub2 = subscribeToTableChanges('blocked_dates', {
@@ -92,8 +92,8 @@ export function CalendarPage() {
   const apptsOnDate = useMemo(() => {
     if (!selectedDate) return [];
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
-    return appointments.filter((a) => a.preferred_date === dateStr);
-  }, [selectedDate, appointments]);
+    return consultations.filter((a) => a.consultation_date === dateStr);
+  }, [selectedDate, consultations]);
 
   const blockedOnDate = useMemo(() => {
     if (!selectedDate) return null;
@@ -103,8 +103,8 @@ export function CalendarPage() {
 
   const getApptCount = (day: Date) => {
     const dateStr = format(day, 'yyyy-MM-dd');
-    return appointments.filter(
-      (a) => a.preferred_date === dateStr && a.status !== 'cancelled',
+    return consultations.filter(
+      (a) => a.consultation_date === dateStr && a.status !== 'cancelled',
     ).length;
   };
 
@@ -250,13 +250,13 @@ export function CalendarPage() {
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-body-md text-xs font-medium text-primary">
-                        {appt.preferred_time || '—'}
+                        {appt.consultation_time || '—'}
                       </span>
                       <Badge
                         variant={appt.status === 'approved' ? 'success' : 'warning'}
                         size="sm"
                       >
-                        {APPOINTMENT_STATUS_LABELS[appt.status]}
+                        {CONSULTATION_STATUS_LABELS[appt.status]}
                       </Badge>
                     </div>
                     <p className="font-body-md text-sm font-medium text-on-surface">

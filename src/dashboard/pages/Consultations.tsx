@@ -9,13 +9,13 @@ import { Textarea } from '../components/ui/textarea';
 import { Dialog, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 import { ErrorState } from '../components/ErrorState';
 import {
-  getAppointmentsPage,
-  updateAppointment,
-  deleteAppointment,
+  getConsultationsPage,
+  updateConsultation,
+  deleteConsultation,
   createActivityLog,
   subscribeToTableChanges,
 } from '../data/service';
-import { APPOINTMENT_STATUS_LABELS, type Appointment } from '../data/schema';
+import { CONSULTATION_STATUS_LABELS, type Consultation } from '../data/schema';
 import { useToast } from '../../lib/toast';
 
 const PAGE_SIZE = 20;
@@ -30,14 +30,14 @@ const STATUS_OPTIONS = [
 ];
 
 export function Appointments() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  const [selected, setSelected] = useState<Appointment | null>(null);
+  const [selected, setSelected] = useState<Consultation | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; label: string } | null>(null);
   const [approveForm, setApproveForm] = useState({ meeting_link: '', scheduled_at: '', admin_notes: '' });
@@ -47,11 +47,11 @@ export function Appointments() {
     setLoading(true);
     setError(null);
     try {
-      const result = await getAppointmentsPage(p, PAGE_SIZE);
-      setAppointments(result.data);
+      const result = await getConsultationsPage(p, PAGE_SIZE);
+      setConsultations(result.data);
       setTotalCount(result.count);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load appointments');
+      setError(err instanceof Error ? err.message : 'Failed to load consultations');
     } finally {
       setLoading(false);
     }
@@ -62,21 +62,21 @@ export function Appointments() {
   }, [page]);
 
   useEffect(() => {
-    const unsub = subscribeToTableChanges('appointments', {
+    const unsub = subscribeToTableChanges('consultations', {
       onInsert: (payload) => {
-        const record = payload.new as unknown as Appointment;
-        if (record) setAppointments((prev) => {
+        const record = payload.new as unknown as Consultation;
+        if (record) setConsultations((prev) => {
           const exists = prev.some((a) => a.id === record.id);
           return exists ? prev : [record, ...prev].slice(0, PAGE_SIZE);
         });
       },
       onUpdate: (payload) => {
-        const record = payload.new as unknown as Appointment;
-        if (record?.id) setAppointments((prev) => prev.map((a) => a.id === record.id ? record : a));
+        const record = payload.new as unknown as Consultation;
+        if (record?.id) setConsultations((prev) => prev.map((a) => a.id === record.id ? record : a));
       },
       onDelete: (payload) => {
-        const old = payload.old as unknown as Appointment;
-        if (old?.id) setAppointments((prev) => prev.filter((a) => a.id !== old.id));
+        const old = payload.old as unknown as Consultation;
+        if (old?.id) setConsultations((prev) => prev.filter((a) => a.id !== old.id));
       },
     });
     return () => unsub();
@@ -84,7 +84,7 @@ export function Appointments() {
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
-  const filtered = appointments.filter((a) => {
+  const filtered = consultations.filter((a) => {
     const matchesSearch =
       a.name.toLowerCase().includes(search.toLowerCase()) ||
       a.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -95,46 +95,48 @@ export function Appointments() {
 
   const statusColorMap: Record<string, 'success' | 'warning' | 'info' | 'neutral' | 'danger'> = {
     approved: 'success',
+    confirmed: 'success',
     pending: 'warning',
     completed: 'info',
     rejected: 'danger',
     cancelled: 'neutral',
+    no_show: 'neutral',
   };
 
-  const handleStatusUpdate = async (id: string, newStatus: Appointment['status'], label: string) => {
-    const appt = appointments.find((a) => a.id === id);
+  const handleStatusUpdate = async (id: string, newStatus: Consultation['status'], label: string) => {
+    const appt = consultations.find((a) => a.id === id);
     if (!appt) return;
-    await updateAppointment(id, { status: newStatus } as never);
+    await updateConsultation(id, { status: newStatus } as never);
     await createActivityLog({
-      action: `Appointment ${label} - ${appt.name}`,
-      entity_type: 'appointment',
+      action: `Consultation ${label} - ${appt.name}`,
+      entity_type: 'consultation',
       entity_id: id,
     } as never);
-    setAppointments((prev) => prev.map((a) => a.id === id ? { ...a, status: newStatus } : a));
+    setConsultations((prev) => prev.map((a) => a.id === id ? { ...a, status: newStatus } : a));
     setSelected((prev) => prev?.id === id ? { ...prev, status: newStatus } : prev);
-    addToast(`Appointment ${label}`);
+    addToast(`Consultation ${label}`);
   };
 
   const handleApprove = async () => {
     if (!selected) return;
     setSaving(true);
     try {
-      await updateAppointment(selected.id, {
+      await updateConsultation(selected.id, {
         status: 'approved',
         meeting_link: approveForm.meeting_link || null,
         scheduled_at: approveForm.scheduled_at || null,
         admin_notes: approveForm.admin_notes || null,
       } as never);
       await createActivityLog({
-        action: `Appointment approved - ${selected.name} (${selected.project_type})`,
-        entity_type: 'appointment',
+        action: `Consultation approved - ${selected.name} (${selected.project_type})`,
+        entity_type: 'consultation',
         entity_id: selected.id,
       } as never);
-      setAppointments((prev) => prev.map((a) => a.id === selected.id ? { ...a, status: 'approved', meeting_link: approveForm.meeting_link || null, scheduled_at: approveForm.scheduled_at || null, admin_notes: approveForm.admin_notes || null } as Appointment : a));
-      setSelected((prev) => prev ? { ...prev, status: 'approved', meeting_link: approveForm.meeting_link || null, scheduled_at: approveForm.scheduled_at || null, admin_notes: approveForm.admin_notes || null } as Appointment : null);
-      addToast('Appointment approved');
+      setConsultations((prev) => prev.map((a) => a.id === selected.id ? { ...a, status: 'approved', meeting_link: approveForm.meeting_link || null, scheduled_at: approveForm.scheduled_at || null, admin_notes: approveForm.admin_notes || null } as Consultation : a));
+      setSelected((prev) => prev ? { ...prev, status: 'approved', meeting_link: approveForm.meeting_link || null, scheduled_at: approveForm.scheduled_at || null, admin_notes: approveForm.admin_notes || null } as Consultation : null);
+      addToast('Consultation approved');
     } catch {
-      addToast('Failed to approve appointment', 'error');
+      addToast('Failed to approve consultation', 'error');
     } finally {
       setSaving(false);
     }
@@ -143,19 +145,19 @@ export function Appointments() {
   const handleDelete = async () => {
     if (!confirmDelete) return;
     try {
-      await deleteAppointment(confirmDelete.id);
+      await deleteConsultation(confirmDelete.id);
       await createActivityLog({
-        action: `Appointment deleted - ${confirmDelete.label}`,
-        entity_type: 'appointment',
+        action: `Consultation deleted - ${confirmDelete.label}`,
+        entity_type: 'consultation',
         entity_id: confirmDelete.id,
       } as never);
       setConfirmDelete(null);
       setSelected(null);
-      setAppointments((prev) => prev.filter((a) => a.id !== confirmDelete.id));
-      addToast('Appointment deleted');
+      setConsultations((prev) => prev.filter((a) => a.id !== confirmDelete.id));
+      addToast('Consultation deleted');
       setTotalCount((c) => Math.max(0, c - 1));
     } catch {
-      addToast('Failed to delete appointment', 'error');
+      addToast('Failed to delete consultation', 'error');
     }
   };
 
@@ -190,15 +192,15 @@ export function Appointments() {
         {loading ? (
           <div className="flex items-center justify-center py-12 text-sm text-on-surface-variant/60">
             <Loader2 size={16} className="animate-spin mr-2" />
-            Loading appointments...
+            Loading consultations...
           </div>
         ) : error ? (
           <ErrorState message={error} onRetry={() => loadData(page)} />
         ) : filtered.length === 0 ? (
           <div className="py-12 text-center text-sm text-on-surface-variant/60">
-            {appointments.length === 0
-              ? 'No appointments yet. Share your portfolio to start receiving requests.'
-              : 'No appointments match your filters.'}
+            {consultations.length === 0
+              ? 'No consultations yet. Share your portfolio to start receiving requests.'
+              : 'No consultations match your filters.'}
           </div>
         ) : (
           filtered.map((appt) => (
@@ -227,7 +229,7 @@ export function Appointments() {
                 variant={statusColorMap[appt.status] ?? 'neutral'}
                 size="sm"
               >
-                {APPOINTMENT_STATUS_LABELS[appt.status]}
+                {CONSULTATION_STATUS_LABELS[appt.status]}
               </Badge>
               <Button
                 variant="ghost"
@@ -283,7 +285,7 @@ export function Appointments() {
                 <div>
                   <p className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider mb-0.5">Status</p>
                   <Badge variant={statusColorMap[selected.status] ?? 'neutral'} size="sm">
-                    {APPOINTMENT_STATUS_LABELS[selected.status]}
+                    {CONSULTATION_STATUS_LABELS[selected.status]}
                   </Badge>
                 </div>
                 <div>
@@ -292,7 +294,7 @@ export function Appointments() {
                 </div>
                 <div>
                   <p className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider mb-0.5">Company</p>
-                  <p className="text-sm text-on-surface">{selected.company || '—'}</p>
+                  <p className="text-sm text-on-surface">{selected.property_name || '—'}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider mb-0.5">Project Type</p>
@@ -302,16 +304,16 @@ export function Appointments() {
                   <p className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider mb-0.5">Budget Range</p>
                   <p className="text-sm text-on-surface">{selected.budget_range || '—'}</p>
                 </div>
-                {selected.preferred_date && (
+                {selected.consultation_date && (
                   <div>
                     <p className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider mb-0.5">Preferred Date</p>
-                    <p className="text-sm text-on-surface">{selected.preferred_date}</p>
+                    <p className="text-sm text-on-surface">{selected.consultation_date}</p>
                   </div>
                 )}
-                {selected.preferred_time && (
+                {selected.consultation_time && (
                   <div>
                     <p className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider mb-0.5">Preferred Time</p>
-                    <p className="text-sm text-on-surface">{selected.preferred_time}</p>
+                    <p className="text-sm text-on-surface">{selected.consultation_time}</p>
                   </div>
                 )}
                 <div>
@@ -320,8 +322,8 @@ export function Appointments() {
                 </div>
               </div>
               <div>
-                <p className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider mb-0.5">Description</p>
-                <p className="text-sm text-on-surface-variant whitespace-pre-wrap">{selected.description}</p>
+                <p className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider mb-0.5">Notes</p>
+                <p className="text-sm text-on-surface-variant whitespace-pre-wrap">{selected.notes}</p>
               </div>
 
               {selected.status === 'approved' && (
@@ -409,9 +411,9 @@ export function Appointments() {
 
       <Dialog open={!!confirmDelete} onClose={() => setConfirmDelete(null)}>
         <DialogHeader>
-          <DialogTitle>Delete Appointment</DialogTitle>
+          <DialogTitle>Delete Consultation</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete the appointment for "{confirmDelete?.label}"? This action cannot be undone.
+            Are you sure you want to delete the consultation for "{confirmDelete?.label}"? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <div className="flex gap-2 justify-end pt-2">

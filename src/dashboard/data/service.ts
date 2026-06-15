@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { Appointment, Consultation, Lead, Availability, ActivityLog, EmailTemplate, BlockedDate } from '../data/schema';
+import type { Consultation, Lead, Availability, ActivityLog, EmailTemplate, BlockedDate } from '../data/schema';
 
 function isConfigured() {
   return !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
@@ -9,54 +9,39 @@ export function sanitize(input: string): string {
   return input.replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '');
 }
 
-// ─── Appointments ───────────────────────────────────────────────────
-
-export async function getAppointments(): Promise<Appointment[]> {
-  if (!isConfigured()) return [];
-  const { data } = await supabase.from('appointments').select('*')
-    .order('created_at', { ascending: false });
-  return (data ?? []) as unknown as Appointment[];
-}
-
-export async function getAppointmentsPage(page: number, pageSize = 20): Promise<{ data: Appointment[]; count: number }> {
-  if (!isConfigured()) return { data: [], count: 0 };
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  const { data, count } = await supabase.from('appointments').select('*', { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .range(from, to);
-  return { data: (data ?? []) as unknown as Appointment[], count: count ?? 0 };
-}
-
-export async function createAppointment(appt: Omit<Appointment, 'id' | 'created_at' | 'updated_at'>) {
-  if (!isConfigured()) return null;
-  const { data } = await supabase.from('appointments').insert(appt as never).select().single();
-  return (data ?? null) as unknown as Appointment | null;
-}
-
-export async function updateAppointment(id: string, updates: Partial<Appointment>) {
-  if (!isConfigured()) return;
-  await supabase.from('appointments').update({ ...updates, updated_at: new Date().toISOString() } as never).eq('id', id);
-}
-
-export async function deleteAppointment(id: string) {
-  if (!isConfigured()) return;
-  await supabase.from('appointments').delete().eq('id', id);
-}
-
-// ─── Consultations (Booking Scheduler) ───────────────────────────────
+// ─── Consultations ────────────────────────────────────────────────────
 
 export async function getConsultations(): Promise<Consultation[]> {
   if (!isConfigured()) return [];
   const { data } = await supabase.from('consultations').select('*')
-    .order('consultation_date', { ascending: true });
+    .order('created_at', { ascending: false });
   return (data ?? []) as unknown as Consultation[];
 }
 
-export async function createConsultation(consult: Omit<Consultation, 'id' | 'created_at'>) {
+export async function getConsultationsPage(page: number, pageSize = 20): Promise<{ data: Consultation[]; count: number }> {
+  if (!isConfigured()) return { data: [], count: 0 };
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const { data, count } = await supabase.from('consultations').select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to);
+  return { data: (data ?? []) as unknown as Consultation[], count: count ?? 0 };
+}
+
+export async function createConsultation(consult: Omit<Consultation, 'id' | 'created_at' | 'updated_at'>) {
   if (!isConfigured()) return null;
   const { data } = await supabase.from('consultations').insert(consult as never).select().single();
   return (data ?? null) as unknown as Consultation | null;
+}
+
+export async function updateConsultation(id: string, updates: Partial<Consultation>) {
+  if (!isConfigured()) return;
+  await supabase.from('consultations').update({ ...updates, updated_at: new Date().toISOString() } as never).eq('id', id);
+}
+
+export async function deleteConsultation(id: string) {
+  if (!isConfigured()) return;
+  await supabase.from('consultations').delete().eq('id', id);
 }
 
 export async function checkSlotAvailability(date: string, time: string): Promise<boolean> {
@@ -66,7 +51,7 @@ export async function checkSlotAvailability(date: string, time: string): Promise
     .select('*', { count: 'exact', head: true })
     .eq('consultation_date', date)
     .eq('consultation_time', time)
-    .in('status', ['pending', 'confirmed']);
+    .in('status', ['pending', 'confirmed', 'approved']);
   return (count ?? 0) === 0;
 }
 
@@ -243,7 +228,7 @@ export async function deleteEmailTemplate(id: string) {
 
 // ─── Rate Limiting ───────────────────────────────────────────────────
 
-const RATE_LIMIT_KEY = 'rl_appointment_submissions';
+const RATE_LIMIT_KEY = 'rl_consultation_submissions';
 
 export function checkRateLimit(): { allowed: boolean; message?: string } {
   try {

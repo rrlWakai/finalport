@@ -603,18 +603,6 @@ export function Contact() {
       const consultationId = newConsultation?.id ?? '';
       const conversationToken = newConsultation?.conversation_token ?? '';
 
-      await supabase.from('appointments').insert({
-        name: form.name.trim(),
-        email: form.email.trim(),
-        company: form.company.trim() || null,
-        project_type: form.project_type,
-        description: form.description.trim(),
-        budget_range: form.budget_range || null,
-        preferred_date: consultationDate,
-        preferred_time: selectedSlot,
-        status: 'pending',
-      } as never);
-
       if (files.length > 0 && consultationId) {
         for (const file of files) {
           const result = await uploadAttachment(consultationId, file);
