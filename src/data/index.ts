@@ -1,4 +1,6 @@
-import type { Project, TechItem, TechCategory, ServiceItem, FaqItem, NavLink, SocialLink, CaseStudy } from '../types';
+import type { TechItem, TechCategory, ServiceItem, FaqItem, NavLink, SocialLink, CaseStudy } from '../types';
+
+export { carouselProjects } from './projects';
 
 export const navLinks: NavLink[] = [
   { label: 'Case Study', href: '#case-study' },
@@ -38,52 +40,10 @@ export const caseStudy: CaseStudy = {
     'Better reservation management — real-time availability prevents overbookings and conflicts',
     'Better guest experience — instant booking, online payment, and automatic confirmation',
   ],
-  techStack: ['React', 'TypeScript', 'Supabase', 'PayMongo', 'Tailwind CSS'],
+  techStack: ['React', 'TypeScript', 'Supabase', 'PayMongo'],
   imageUrl: '',
   cta: 'Want a booking system like this for your property?',
 };
-
-export const projects: Project[] = [
-  {
-    id: 'premier-pool-house',
-    title: 'Premier Pool House & Premier Patio',
-    description:
-      'Production online reservation system processing real bookings. Real-time availability, online payments, multi-property management.',
-    tags: ['React', 'TypeScript', 'Supabase', 'PayMongo'],
-    imageUrl: '',
-    cta: 'View Case Study',
-  },
-  {
-    id: 'yuh-rum',
-    title: 'Yuh-Rum',
-    description:
-      'Full-service villa booking platform with multi-step reservation flow, PayMongo payments, admin dashboard, and real-time availability management.',
-    tags: ['React', 'TypeScript', 'Supabase', 'PayMongo'],
-    imageUrl: '',
-    cta: 'Visit Website',
-    url: 'https://yuh-rum.vercel.app/',
-  },
-  {
-    id: 'review-buddy',
-    title: 'Review Buddy',
-    description:
-      'AI-powered content management tool that transforms unstructured information into structured, publish-ready formats. Demonstrates AI integration and automation capabilities.',
-    tags: ['React', 'TypeScript', 'Gemini API', 'Supabase'],
-    imageUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBokIIMjuyK81MDFaNz_55avwjjWKU5OSlMZSL8Y5yRHgg4BtPzojJf6fzbkpNWby8ESipDGCC5Et1iO35EEjBYqfAmlg_FAEhgwl6vI6qCu0DivwJkb_g5bQdtmJ6aKi-6Dc8dIbkAxPOjb270i2Fex9CcSDl4CFIGqFRnSvNEbKfgMffzDDQ27kPP85_xnQkbcT_3zqnIpZh8MjuXXp95TUaLdmPVJ-KMwYOKphtW2DZrAET9khrhNtvgu76bzQWlKaTAtCGyJHk',
-    cta: 'Explore Project',
-  },
-  {
-    id: 'nexus-oms',
-    title: 'Nexus OMS',
-    description:
-      'Reservation and inventory management engine with real-time availability tracking, conflict detection, and order lifecycle management. Core logic transfers directly to booking systems.',
-    tags: ['Node.js', 'React', 'MySQL', 'Supabase'],
-    imageUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuD3KF7qNBvUj2E-whH9yGbrcDN3RyehK6G-C-IAhwR02AtNe3I8Jl4tdh_eu2RjMKYRU0_F2geCt0dwhg3q-01p8fFQachpnVhQOzLNQtMpenz3cFuTElWLKQNspWyTmPnM_t9AwTsiNDuAJyhjhTMuw5FKKMAm3WkMWf51eD9gk5h4cDjpw7LWs_wuq7GBF6DtM2SOiQ9za_TAn60HYRaSic3en6kaGHbEfcT5IJhwZOpGhHFwp8aXDjQSl4nd8VLabLV_IKvqKS0',
-    cta: 'Explore Project',
-  },
-];
 
 export const categories: { id: TechCategory; label: string }[] = [
   { id: 'Frontend', label: 'Frontend' },

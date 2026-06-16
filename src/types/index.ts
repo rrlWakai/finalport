@@ -1,14 +1,21 @@
 export interface Project {
   id: string;
   title: string;
+  subtitle: string;
+  category: string;
+  type: string;
+  status: string;
   description: string;
-  tags: string[];
-  imageUrl?: string;
-  isTextVisual?: boolean;
-  textVisual?: string;
-  cta: string;
-  ctaIcon?: string;
-  url?: string;
+  problem: string;
+  solution: string;
+  features: string[];
+  technologies: string[];
+  image: string;
+  demoUrl?: string;
+  githubUrl?: string;
+  caseStudyId?: string;
+  year: string;
+  featured: boolean;
 }
 
 export type TechCategory = 'Frontend' | 'Backend' | 'Databases' | 'Integrations';

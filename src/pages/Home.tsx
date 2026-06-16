@@ -1,7 +1,7 @@
 import { Hero } from '../components/sections/Hero';
 import { CaseStudy } from '../components/sections/CaseStudy';
 import { Services } from '../components/sections/Services';
-import { Projects } from '../components/sections/Projects';
+import { ProjectsCarousel } from '../components/sections/ProjectsCarousel';
 import { WhyWorkWithMe } from '../components/sections/WhyWorkWithMe';
 import { TechStack } from '../components/sections/TechStack';
 import { Faq } from '../components/sections/Faq';
@@ -13,7 +13,7 @@ export function Home() {
       <Hero />
       <CaseStudy />
       <Services />
-      <Projects />
+      <ProjectsCarousel />
       <WhyWorkWithMe />
       <TechStack />
       <Faq />
